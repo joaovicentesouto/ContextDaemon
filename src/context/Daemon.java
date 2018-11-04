@@ -3,8 +3,11 @@ package context;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
+import weka.core.Instance;
+
 public class Daemon {
 	
+	static private MachineLearning _learning;
 	static private CacheController _cache_controller;
 	static private NamedPipeReader _pipe_reader;
 
@@ -70,6 +73,23 @@ public class Daemon {
 					{
 						try {
 							_cache_controller.updateControl(msg.getSmartData());
+						} catch (Exception e) {
+							System.out.println("Control cache error: " + e.getMessage());
+						}
+					}
+				}.start();
+				
+				break;
+			
+			case PREDICT:
+
+				new Thread() {
+					public void run()
+					{
+						try {
+							Instance context = _cache_controller.current_context();
+							_learning.predict(context);
+//							String msg = context.value("ideal_temperature - achar index");
 						} catch (Exception e) {
 							System.out.println("Control cache error: " + e.getMessage());
 						}

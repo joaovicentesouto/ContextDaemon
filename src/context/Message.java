@@ -18,7 +18,10 @@ public class Message {
 		DATA (3),
 		
 		@SerializedName("4")
-		COMMAND (4);
+		COMMAND (4),
+		
+		@SerializedName("5")
+		PREDICT (4);
 		
 		private final int value;
 		

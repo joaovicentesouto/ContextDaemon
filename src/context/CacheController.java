@@ -1,6 +1,9 @@
 package context;
 
 import context.CacheController;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -24,25 +27,37 @@ public class CacheController {
 	static long TEMPERATURE = 2224179556L;
 	static long HUMIDITY = 2224179500L; //! VERIFICAR
 	
-	//! Max size of _instances = 1000
-	private List<Instance> _instances;
+	//! Max size of _current_instances = 1000
+	private List<Instance> _current_instances;
+	
 //	private ArrayList<Attribute> attributes;
 	
 	private Instances _persistent_instances;
 	
 	//! Build one instance per 30 seconds
-	private Double avg_internal_temps = 0.0, avg_external_temps = 0.0, avg_internal_hums = 0.0, avg_external_hums = 0.0;
-	private int n_in_temp = 0, n_out_temp = 0, n_in_hum = 0, n_out_hum = 0;
+	private Double avg_internal_temps;
+	private Double avg_external_temps;
+	private Double avg_internal_hums;
+	private Double avg_external_hums;
+	private int n_in_temp;
+	private int n_out_temp;
+	private int n_in_hum;
+	private int n_out_hum;
 	
-	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC")); 
+	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+	
+	private Instance _current_context = null;
+	private MachineLearning _learning = null;
 
-	public CacheController() throws Exception {
+	public CacheController(MachineLearning learning) throws Exception {
 		super();
 		
-		_instances = Collections.synchronizedList(new LinkedList<Instance>());
+		_learning = learning;
+		_current_instances = Collections.synchronizedList(new LinkedList<Instance>());
 		_calendar.setTimeInMillis(System.currentTimeMillis());
 		
 		reload_backup();
+		reset_parameters();
 //		feature_selection();
 	}
 	
@@ -50,19 +65,24 @@ public class CacheController {
 		
 		//! Carrega instancias persistentes
 		DataSource source = new DataSource("cache.arff");
-		_persistent_instances = source.getDataSet();
+		Instances aux = source.getDataSet();
+		aux.setClassIndex(_persistent_instances.numAttributes() - 1); 
 		
 		//! Dados insuficientes?
-		if (_persistent_instances.size() < 1000)
+		if (aux.size() < 1000)
 		{
 			source = new DataSource("default.arff");
-			Instances aux = source.getDataSet();
+			_persistent_instances = source.getDataSet();
 			
-			Iterator<Instance> it = aux.iterator();
+			Iterator<Instance> it = _persistent_instances.iterator();
 			
-			while(it.hasNext())
-				_persistent_instances.add((Instance) it);
+			while(it.hasNext() && _persistent_instances.size() < 1000)
+				aux.add((Instance) it);
 		}
+		
+		_persistent_instances = aux;
+		
+		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
 	}
 	
 	//! Vou deixar o feature selection de lado por enquanto.
@@ -104,19 +124,13 @@ public class CacheController {
 			instance.setValue(6, _calendar.get(Calendar.DAY_OF_WEEK));
 			instance.setValue(7, 22); //! Comando do usuário
 			
-			_instances.add(instance);
+			_current_instances.add(instance);
 			
+			_current_context = instance;
 			
 			//! Zera nova instância
 			_calendar.setTimeInMillis((data.getT() + 1) * 1000L);
-			avg_internal_temps = 0.0;
-			avg_external_temps = 0.0;
-			avg_internal_hums = 0.0;
-			avg_external_hums = 0.0;
-			n_in_temp = 0;
-			n_out_temp = 0;
-			n_in_hum = 0;
-			n_out_hum = 0;
+			reset_parameters();
 		}
 		
 		
@@ -152,16 +166,53 @@ public class CacheController {
 		}
 		
 		//! Update learning model
-		if(_instances.size() >= 1000) {
+		if(_current_instances.size() >= 1000)
 			update_model();
-		}
 	}
 	
-	public synchronized void update_model() {
+	public synchronized Instance current_context() {
+		return _current_context;
+	}
+	
+	public synchronized void update_model()
+	{
+		//! Update model
+		try {
+			_learning.update(_current_instances);			
+		} catch (Exception e) {
+			System.out.println("Error on periodic update: " + e.getMessage());
+		}
 		
+		//! Update persistent cache
+		_persistent_instances.addAll(_current_instances);
+		
+		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia (nunca vai ser isso)
+		int limit = _persistent_instances.size() - 2280;
+		for (int index = 0; index < limit; index++)
+			_persistent_instances.remove(index);
+		
+		try {
+			BufferedWriter writer = new BufferedWriter(new FileWriter("cache.arff", false));
+			writer.write(_persistent_instances.toString());
+			writer.flush();
+			writer.close();
+		} catch (Exception e) {
+			System.out.println("Error on periodic update: " + e.getMessage());
+		}
 	}
 	
 	public synchronized void updateControl(SmartData data) {
 		
+	}
+	
+	private void reset_parameters() {
+		avg_internal_temps = 0.0;
+		avg_external_temps = 0.0;
+		avg_internal_hums = 0.0;
+		avg_external_hums = 0.0;
+		n_in_temp = 0;
+		n_out_temp = 0;
+		n_in_hum = 0;
+		n_out_hum = 0;
 	}
 }
