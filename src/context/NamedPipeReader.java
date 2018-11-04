@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-//import com.google.gson.Gson;
+import com.google.gson.Gson;
 
 public class NamedPipeReader {
 	
@@ -25,7 +25,7 @@ public class NamedPipeReader {
 	}
 	
 	public String receive() throws IOException {
-//		Gson gson = new Gson();
+		Gson gson = new Gson();
 
 		_pipe_reader = new BufferedReader(new FileReader(new File(filename)));
 		String msg = _pipe_reader.readLine();

@@ -19,7 +19,7 @@ public class Daemon {
 		NamedPipeReader pipe_reader = null;
 		
 		try {
-			pipe_reader = new NamedPipeReader("/Users/joaovicentesouto/code/myfifo");
+			pipe_reader = new NamedPipeReader("myfifo");
 		} catch (Exception excp) {
 			System.out.println("Não deu para abrir o pipe reader!");
 		}
