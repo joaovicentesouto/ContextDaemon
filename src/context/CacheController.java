@@ -1,7 +1,7 @@
 package context;
 
-public interface CacheController<Data> {
+public interface CacheController {
 	
-	public void update(Data data);
+	public void update(SmartData data);
 
 }

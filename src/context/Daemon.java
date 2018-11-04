@@ -12,10 +12,6 @@ public class Daemon {
 		
 		reload();
 		
-		//! Test
-		_data.update("Isto é um dado.");
-		_control.update("Isso é um controle");
-		
 		NamedPipeReader pipe_reader = null;
 		
 		try {
@@ -28,39 +24,39 @@ public class Daemon {
 		while (pipe_reader != null) {
 			System.out.println("Waiting...");
 			
-			String msg = pipe_reader.receive();
+			Message msg = pipe_reader.receive();
 			
-			System.out.println("Message receive:");
-			System.out.println(msg);
+//			System.out.println("Message receive:");
+//			System.out.println(msg);
 			
-			switch (msg)
+			switch (msg.getType())
 			{
-			case "START":
+			case START:
 				break;
 
-			case "RESTART":
+			case RESTART:
 				//! Reload caches
 				break;
 
-			case "FINISH":
+			case FINISH:
 				//! Close caches file on disk
 				break;
 
-			case "DATA":
+			case DATA:
 				
 				new Thread() {
 					public void run() {
-						_data.update(msg);
+						_data.update(msg.getSmartData());
 					}
 				}.start();
 				
 				break;
 
-			case "COMMAND":
+			case COMMAND:
 
 				new Thread() {
 					public void run() {
-						_data.update(msg);
+						_control.update(msg.getSmartData());
 					}
 				}.start();
 				
@@ -76,11 +72,11 @@ public class Daemon {
 	}
 	
 	public static void reload() {
-		_data = new DataCacheController<String>();
-		_control = new ControlCacheController<String>();
+		_data = new DataCacheController();
+		_control = new ControlCacheController();
 	}
 	
-	static private CacheController<String> _data;
-	static private CacheController<String> _control;
+	static private CacheController _data;
+	static private CacheController _control;
 
 }

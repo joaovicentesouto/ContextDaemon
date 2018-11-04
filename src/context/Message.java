@@ -1,15 +1,40 @@
 package context;
 
+import com.google.gson.annotations.SerializedName;
+
 public class Message {
 	
 	public enum Type {
-		START, FINISH, RESTART, DATA, COMMAND
+		@SerializedName("0")
+		START (0),
+		
+		@SerializedName("1")
+		FINISH (1),
+		
+		@SerializedName("2")
+		RESTART (2),
+		
+		@SerializedName("3")
+		DATA (3),
+		
+		@SerializedName("4")
+		COMMAND (4);
+		
+		private final int value;
+		
+	    public int getValue() {
+	        return value;
+	    }
+
+	    private Type(int value) {
+	        this.value = value;
+	    }
 	}
 	
-	public Message(Type type, String data) {
+	public Message(Type type, SmartData data) {
 		super();
 		this.type = type;
-		this.data = data;
+		this.smartdata = data;
 	}
 	
 	public Type getType() {
@@ -18,13 +43,18 @@ public class Message {
 	public void setType(Type type) {
 		this.type = type;
 	}
-	public String getData() {
-		return data;
+	public SmartData getSmartData() {
+		return smartdata;
 	}
-	public void setData(String data) {
-		this.data = data;
+	public void setSmartData(SmartData data) {
+		this.smartdata = data;
+	}
+
+	@Override
+	public String toString() {
+		return "Message [type=" + type + ", smartdata=" + smartdata.toString() + "]";
 	}
 
 	private Type type;
-	private String data;
+	private SmartData smartdata;
 }

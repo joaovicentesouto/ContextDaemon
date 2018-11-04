@@ -24,15 +24,14 @@ public class NamedPipeReader {
 		}
 	}
 	
-	public String receive() throws IOException {
+	public Message receive() throws IOException {
 		Gson gson = new Gson();
 
 		_pipe_reader = new BufferedReader(new FileReader(new File(filename)));
 		String msg = _pipe_reader.readLine();
 		_pipe_reader.close();
-		return msg;
 		
-//		return gson.fromJson(msg, Message.class);
+		return gson.fromJson(msg, Message.class);
 	}
 
 	private BufferedReader _pipe_reader;
