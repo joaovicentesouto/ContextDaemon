@@ -28,7 +28,7 @@ public class CacheController {
 	static long HUMIDITY = 2224179500L; //! VERIFICAR
 	
 	//! Max size of _current_instances = 1000
-	private List<Instance> _current_instances;
+	private Instances _current_instances;
 	
 //	private ArrayList<Attribute> attributes;
 	
@@ -47,16 +47,24 @@ public class CacheController {
 	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 	
 	private Instance _current_context = null;
+	
 	private MachineLearning _learning = null;
 
 	public CacheController(MachineLearning learning) throws Exception {
 		super();
-		
+
 		_learning = learning;
-		_current_instances = Collections.synchronizedList(new LinkedList<Instance>());
-		_calendar.setTimeInMillis(System.currentTimeMillis());
+//		_calendar.setTimeInMillis(System.currentTimeMillis());
+		_calendar.setTimeInMillis(1541368216256L);
+		System.out.println(_calendar.getTimeInMillis());
 		
-		reload_backup();
+		try {
+			reload_backup();
+			_current_instances.clear();
+		} catch (Exception e) {
+			throw e;
+		}
+		
 		reset_parameters();
 //		feature_selection();
 	}
@@ -64,25 +72,53 @@ public class CacheController {
 	private void reload_backup() throws Exception {
 		
 		//! Carrega instancias persistentes
-		DataSource source = new DataSource("cache.arff");
-		Instances aux = source.getDataSet();
-		aux.setClassIndex(_persistent_instances.numAttributes() - 1); 
+		DataSource source;
+		Instances aux;
+		
+		try {
+			source = new DataSource("cache.arff");
+			aux = source.getDataSet();
+		} catch (Exception e) {
+			throw new Exception("cache.arff failed!");
+		}
+
+//		Instances aux = source.getDataSet();
+		aux.setClassIndex(aux.numAttributes() - 1); 
 		
 		//! Dados insuficientes?
 		if (aux.size() < 1000)
 		{
-			source = new DataSource("default.arff");
+			try {
+				source = new DataSource("default.arff");
+			} catch (Exception e) {
+				throw new Exception("default.arff failed!");
+			}
+			
 			_persistent_instances = source.getDataSet();
+			_persistent_instances.setClassIndex(aux.numAttributes() - 1);
 			
 			Iterator<Instance> it = _persistent_instances.iterator();
 			
 			while(it.hasNext() && _persistent_instances.size() < 1000)
-				aux.add((Instance) it);
+			{
+				Instance i = it.next();
+				aux.add(i);
+			}
 		}
 		
 		_persistent_instances = aux;
 		
+		_persistent_instances.setClassIndex(_persistent_instances.numAttributes() - 1);
+		
+		System.out.println("Context: " + _persistent_instances.classIndex());
+//		
 		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
+		System.out.println("Context: " + _current_context.toString());
+//		
+		_learning = new MachineLearning(_persistent_instances);
+//		
+		_current_instances = new Instances(_persistent_instances);
+//		_current_instances.clear();
 	}
 	
 	//! Vou deixar o feature selection de lado por enquanto.
@@ -108,11 +144,14 @@ public class CacheController {
 //		
 //		_persistent_instances = new Instances("weather", attributes, 11);
 //	}
+	
+	public synchronized void updateControl(SmartData data) { }
 
 	public synchronized void updateData(SmartData data) throws Exception
 	{	
 		//! Se já se passaram 30 segundos => constrói uma instância
-		if (_calendar.getTimeInMillis()/1000l - data.getT() > 30) {
+		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30) {
+			System.out.println("Seco333: " + (data.getT() - _calendar.getTimeInMillis())/1000L);
 			
 			Instance instance = new DenseInstance(8); //! _persistent_instances.size()
 			instance.setValue(0, avg_internal_temps);
@@ -166,8 +205,12 @@ public class CacheController {
 		}
 		
 		//! Update learning model
-		if(_current_instances.size() >= 1000)
+		if(_current_instances.size() >= 1000) {
 			update_model();
+			_current_instances.clear();
+		}
+		
+		print_parameters();
 	}
 	
 	public synchronized Instance current_context() {
@@ -192,7 +235,7 @@ public class CacheController {
 			_persistent_instances.remove(index);
 		
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter("cache.arff", false));
+			BufferedWriter writer = new BufferedWriter(new FileWriter("cache2.arff", false));
 			writer.write(_persistent_instances.toString());
 			writer.flush();
 			writer.close();
@@ -201,8 +244,8 @@ public class CacheController {
 		}
 	}
 	
-	public synchronized void updateControl(SmartData data) {
-		
+	public MachineLearning learning() {
+		return _learning;
 	}
 	
 	private void reset_parameters() {
@@ -214,5 +257,20 @@ public class CacheController {
 		n_out_temp = 0;
 		n_in_hum = 0;
 		n_out_hum = 0;
+	}
+	
+	static int i = 0;
+	
+	private void print_parameters() {
+		System.out.println("Data " + i++);
+		System.out.println("avg_internal_temps: " + avg_internal_temps);
+		System.out.println("avg_external_temps: " + avg_external_temps);
+		System.out.println("avg_internal_hums: " + avg_internal_hums);
+		System.out.println("avg_external_hums: " + avg_external_hums);
+		System.out.println("n_in_temp: " + n_in_temp);
+		System.out.println("n_out_temp: " + n_out_temp);
+		System.out.println("n_in_hum: " + n_in_hum);
+		System.out.println("n_out_hum: " + n_out_hum);
+		System.out.println("");
 	}
 }

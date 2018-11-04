@@ -21,7 +21,7 @@ public class Message {
 		COMMAND (4),
 		
 		@SerializedName("5")
-		PREDICT (4);
+		PREDICT (5);
 		
 		private final int value;
 		

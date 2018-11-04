@@ -83,18 +83,19 @@ public class Daemon {
 			
 			case PREDICT:
 
-				new Thread() {
-					public void run()
-					{
+//				new Thread() {
+//					public void run()
+//					{
 						try {
 							Instance context = _cache_controller.current_context();
 							_learning.predict(context);
 //							String msg = context.value("ideal_temperature - achar index");
+							System.out.println("Predict: " + context.toString());
 						} catch (Exception e) {
-							System.out.println("Control cache error: " + e.getMessage());
+							System.out.println("Predict cache error: " + e.getMessage());
 						}
-					}
-				}.start();
+//					}
+//				}.start();
 				
 				break;
 
@@ -133,7 +134,8 @@ public class Daemon {
 	public static void reload()
 	{	
 		try {
-			_cache_controller = new CacheController();
+			_learning = new MachineLearning();
+			_cache_controller = new CacheController(_learning);
 		} catch (Exception e) {
 			System.out.println("Reload error: " + e.getMessage());
 		}
