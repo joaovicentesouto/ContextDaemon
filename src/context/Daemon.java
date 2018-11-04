@@ -1,11 +1,31 @@
 package context;
 
 import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.TimeZone;
 
 public class Daemon {
 
 	public static void main(String[] args) throws IOException {
 		System.out.println("Daemon up...");
+		
+
+		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		
+		// Get the current time
+		Date x = calendar.getTime();
+		System.out.println("x1: " + x);
+		
+		long seconds = System.currentTimeMillis() / 1000l;
+		System.out.println("T: " + seconds);
+		
+		
+		calendar.setTimeInMillis(seconds * 1000l);
+		x = calendar.getTime();
+		
+		System.out.println("x2: " + x);
+	
 		
 		
 		System.out.println("Configuring...");
@@ -46,7 +66,7 @@ public class Daemon {
 				
 				new Thread() {
 					public void run() {
-						_data.update(msg.getSmartData());
+						_cache_controller.updateData(msg.getSmartData());
 					}
 				}.start();
 				
@@ -56,7 +76,7 @@ public class Daemon {
 
 				new Thread() {
 					public void run() {
-						_control.update(msg.getSmartData());
+						_cache_controller.updateControl(msg.getSmartData());
 					}
 				}.start();
 				
@@ -72,11 +92,9 @@ public class Daemon {
 	}
 	
 	public static void reload() {
-		_data = new DataCacheController();
-		_control = new ControlCacheController();
+		_cache_controller = new CacheController();
 	}
 	
-	static private CacheController _data;
-	static private CacheController _control;
+	static private CacheController _cache_controller;
 
 }
