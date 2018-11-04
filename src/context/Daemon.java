@@ -23,7 +23,7 @@ public class Daemon {
 		try {
 			_pipe_reader = new NamedPipeReader("myfifo");
 		} catch (Exception excp) {
-			System.out.println("Não deu para abrir o pipe reader!");
+			System.out.println("Cannot open the pipe!");
 		}
 		
 		System.out.println("Services up ...");
@@ -34,12 +34,9 @@ public class Daemon {
 			
 			Message msg = _pipe_reader.receive();
 			
-//			System.out.println("Message receive:");
-//			System.out.println(msg);
-			
 			switch (msg.getType())
 			{
-			case START: //! Precisa?
+			case START:
 				break;
 
 			case RESTART:
@@ -48,11 +45,13 @@ public class Daemon {
 				break;
 
 			case FINISH:
+				//! Fecha o pipe
 				_pipe_reader.close();
 				break;
 
 			case DATA:
 				
+				//! Executa a atualização da cache em paralelo
 				new Thread() {
 					public void run()
 					{
@@ -67,7 +66,8 @@ public class Daemon {
 				break;
 
 			case COMMAND:
-
+				
+				//! Executa a atualização da cache em paralelo
 				new Thread() {
 					public void run()
 					{
@@ -83,19 +83,18 @@ public class Daemon {
 			
 			case PREDICT:
 
-//				new Thread() {
-//					public void run()
-//					{
+				new Thread() {
+					public void run()
+					{
 						try {
 							Instance context = _cache_controller.current_context();
 							_learning.predict(context);
-//							String msg = context.value("ideal_temperature - achar index");
 							System.out.println("Predict: " + context.toString());
 						} catch (Exception e) {
 							System.out.println("Predict cache error: " + e.getMessage());
 						}
-//					}
-//				}.start();
+					}
+				}.start();
 				
 				break;
 
@@ -117,11 +116,9 @@ public class Daemon {
 			out = new BufferedWriter(new FileWriter(".pid", false));
 		    out.write((int) pid);
 		}
-
 		catch (Exception e) {
 		    System.err.println("Error: " + e.getMessage());
 		}
-
 		finally {
 		    if(out != null) {
 		        out.close();

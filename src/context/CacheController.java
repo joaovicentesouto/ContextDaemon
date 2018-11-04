@@ -1,40 +1,29 @@
 package context;
 
-import context.CacheController;
-
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
-import java.util.LinkedList;
-//import java.time;
-import java.util.List;
 import java.util.TimeZone;
 
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.converters.ConverterUtils.DataSource;
 import weka.core.DenseInstance;
-import weka.core.Attribute;
 
 public class CacheController {
 	
 	//! Constantes
 	static long TEMPERATURE = 2224179556L;
-	static long HUMIDITY = 2224179500L; //! VERIFICAR
+	static long HUMIDITY    = 2224179500L; //! VERIFICAR
 	
-	//! Max size of _current_instances = 1000
+	//! Guarda o lote de novas instancias
 	private Instances _current_instances;
 	
-//	private ArrayList<Attribute> attributes;
-	
+	//! Guarda a cache persistente em memória (espelho do que existe no disco)
 	private Instances _persistent_instances;
 	
-	//! Build one instance per 30 seconds
+	//! Armazena a média dos valores medidos num intervalo de 30s
 	private Double avg_internal_temps;
 	private Double avg_external_temps;
 	private Double avg_internal_hums;
@@ -44,18 +33,20 @@ public class CacheController {
 	private int n_in_hum;
 	private int n_out_hum;
 	
+	//! Responsável pela armazenamento do timestamp
 	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 	
+	//! Contexto atual
 	private Instance _current_context = null;
 	
+	//! Objeto de aprendizado (guarda o modelo)
 	private MachineLearning _learning = null;
 
 	public CacheController(MachineLearning learning) throws Exception {
 		super();
 
 		_learning = learning;
-		
-		 //! Ver o t do smartdata está em milisegundos
+	
 		_calendar.setTimeInMillis(System.currentTimeMillis());
 		
 		try {
@@ -66,7 +57,6 @@ public class CacheController {
 		}
 		
 		reset_parameters();
-//		feature_selection();
 	}
 	
 	private void reload_backup() throws Exception {
@@ -80,25 +70,23 @@ public class CacheController {
 			aux = source.getDataSet();
 		} catch (Exception e) {
 			throw new Exception("cache.arff failed!");
-		}
-
-//		Instances aux = source.getDataSet();
-		aux.setClassIndex(aux.numAttributes() - 1); 
+		} 
 		
-		//! Dados insuficientes?
+		//! Os dados da cache persistente são insuficientes?
 		if (aux.size() < 1000)
 		{
 			try {
 				source = new DataSource("default.arff");
+				_persistent_instances = source.getDataSet();
 			} catch (Exception e) {
 				throw new Exception("default.arff failed!");
 			}
-			
-			_persistent_instances = source.getDataSet();
+
 			_persistent_instances.setClassIndex(aux.numAttributes() - 1);
 			
 			Iterator<Instance> it = _persistent_instances.iterator();
 			
+			//! Completa instancias utiliando as default
 			while(it.hasNext() && _persistent_instances.size() < 1000)
 			{
 				Instance i = it.next();
@@ -108,25 +96,22 @@ public class CacheController {
 		
 		_persistent_instances = aux;
 		
+		//! Configura o espelho da cache persistente
 		_persistent_instances.setClassIndex(_persistent_instances.numAttributes() - 1);
-		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
-//		
-//		_learning = new MachineLearning(_persistent_instances);
-//		
 		_current_instances = new Instances(_persistent_instances);
-//		_current_instances.clear();
+		
+		//! Assume sendo o contexto atual
+		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
 	}
-	
-	public synchronized void updateControl(SmartData data) { }
 
 	public synchronized void updateData(SmartData data) throws Exception
 	{	
-		//! Se já se passaram 30 segundos => constrói uma instância
-		System.out.println("Seco333: " + (data.getT() - _calendar.getTimeInMillis())/1000L);
+		//! Cria uma instancia que representa um intervalo de 30s
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30) {
 			System.out.println("Seco333: " + (data.getT() - _calendar.getTimeInMillis())/1000L);
 			
-			Instance instance = new DenseInstance(8); //! _persistent_instances.size()
+			Instance instance = new DenseInstance(_persistent_instances.numAttributes());
+			
 			instance.setValue(0, avg_internal_temps);
 			instance.setValue(1, avg_external_temps);
 			instance.setValue(2, avg_internal_hums);
@@ -136,12 +121,13 @@ public class CacheController {
 			instance.setValue(6, _calendar.get(Calendar.DAY_OF_WEEK));
 			instance.setValue(7, 22); //! Comando do usuário
 			
+			//! Adiciona nas instâncias atuais
 			_current_instances.add(instance);
-			System.out.println("In: " + instance);
 			
+			//! Atualiza o contexto atual
 			_current_context = instance;
 			
-			//! Zera nova instância
+			//! Reseta parâmetros para nova instância
 			_calendar.setTimeInMillis(data.getT() + 1);
 			reset_parameters();
 		}
@@ -149,12 +135,13 @@ public class CacheController {
 		
 		switch (data.getX())
 		{
+		
 		//! Interno
 		case 298:
 			if (data.getUnit() == TEMPERATURE) {
 				n_in_temp++;
 				avg_internal_temps = avg_internal_temps + (data.getValue() - avg_internal_temps) / n_in_temp;
-			} else { //! HUMIDITY
+			} else {
 				n_in_hum++;
 				avg_internal_hums = avg_internal_hums + (data.getValue() - avg_internal_hums) / n_in_hum;
 			}
@@ -173,18 +160,16 @@ public class CacheController {
 			
 			break;
 			
-		//! Erro
 		default:
-			throw new Exception("Deu ruim!");
+			throw new Exception("Este dispositivo não deveria estar sendo monitorado!");
 		}
 		
-		//! Update learning model
-		if(_current_instances.size() >= 2) {
+		//! Caso o tamanho da cache atinga 1000 instâncias,
+		//! é executado o retreinamento da rede neural
+		if(_current_instances.size() >= 1000) {
 			update_model();
 			_current_instances.clear();
 		}
-		
-		print_parameters();
 	}
 	
 	public synchronized Instance current_context() {
@@ -193,22 +178,23 @@ public class CacheController {
 	
 	public synchronized void update_model()
 	{
-		System.out.println("UPDATING.......\n");
-		//! Update model
+		//! Atualiza o modelo
 		try {
 			_learning.update(_current_instances);			
 		} catch (Exception e) {
 			System.out.println("Error on periodic update: " + e.getMessage());
 		}
 		
-		//! Update persistent cache
-		_persistent_instances.addAll(_current_instances);
-		
-		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia (nunca vai ser isso)
+		//! Elimina as instâncias mais antigas.
+		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia
 		int limit = _persistent_instances.size() - 2280;
 		for (int index = 0; index < limit; index++)
 			_persistent_instances.remove(index);
 		
+		//! Atualiza com novas instancias 
+		_persistent_instances.addAll(_current_instances);
+		
+		//! Atualiza em disco
 		try {
 			BufferedWriter writer = new BufferedWriter(new FileWriter("cache2.arff", false));
 			writer.write(_persistent_instances.toString());
@@ -219,9 +205,7 @@ public class CacheController {
 		}
 	}
 	
-	public MachineLearning learning() {
-		return _learning;
-	}
+	public synchronized void updateControl(SmartData data) { }
 	
 	private void reset_parameters() {
 		avg_internal_temps = 0.0;
