@@ -1,72 +1,63 @@
 package context;
 
-import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.TimeZone;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 public class Daemon {
-
-	public static void main(String[] args) throws IOException {
-		System.out.println("Daemon up...");
-		
-
-		Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-		
-		// Get the current time
-		Date x = calendar.getTime();
-		System.out.println("x1: " + x);
-		
-		long seconds = System.currentTimeMillis() / 1000l;
-		System.out.println("T: " + seconds);
-		
-		
-		calendar.setTimeInMillis(seconds * 1000l);
-		x = calendar.getTime();
-		
-		System.out.println("x2: " + x);
 	
+	static private CacheController _cache_controller;
+	static private NamedPipeReader _pipe_reader;
+
+	public static void main(String[] args) throws Exception
+	{
+		System.out.println("Daemon up ...");		
 		
+		System.out.println("Configuring ...");
+		configure();
 		
-		System.out.println("Configuring...");
-		
-		reload();
-		
-		NamedPipeReader pipe_reader = null;
+		_pipe_reader = null;
 		
 		try {
-			pipe_reader = new NamedPipeReader("myfifo");
+			_pipe_reader = new NamedPipeReader("myfifo");
 		} catch (Exception excp) {
 			System.out.println("Não deu para abrir o pipe reader!");
 		}
 		
-		System.out.println("Services up...");
-		while (pipe_reader != null) {
-			System.out.println("Waiting...");
+		System.out.println("Services up ...");
+		
+		while (_pipe_reader != null)
+		{
+			System.out.println("Waiting requisitions ...");
 			
-			Message msg = pipe_reader.receive();
+			Message msg = _pipe_reader.receive();
 			
 //			System.out.println("Message receive:");
 //			System.out.println(msg);
 			
 			switch (msg.getType())
 			{
-			case START:
+			case START: //! Precisa?
 				break;
 
 			case RESTART:
-				//! Reload caches
+				//! Recarrega a cache
+				reload();
 				break;
 
 			case FINISH:
-				//! Close caches file on disk
+				_pipe_reader.close();
 				break;
 
 			case DATA:
 				
 				new Thread() {
-					public void run() {
-						_cache_controller.updateData(msg.getSmartData());
+					public void run()
+					{
+						try {
+							_cache_controller.updateData(msg.getSmartData());
+						} catch (Exception e) {
+							System.out.println("Data cache error: " + e.getMessage());
+						}
 					}
 				}.start();
 				
@@ -75,8 +66,13 @@ public class Daemon {
 			case COMMAND:
 
 				new Thread() {
-					public void run() {
-						_cache_controller.updateControl(msg.getSmartData());
+					public void run()
+					{
+						try {
+							_cache_controller.updateControl(msg.getSmartData());
+						} catch (Exception e) {
+							System.out.println("Control cache error: " + e.getMessage());
+						}
 					}
 				}.start();
 				
@@ -91,10 +87,35 @@ public class Daemon {
 		System.out.println("Daemon exit");
 	}
 	
-	public static void reload() {
-		_cache_controller = new CacheController();
+	public static void configure() throws Exception
+	{		
+		BufferedWriter out = null;
+		long pid = ProcessHandle.current().pid();
+		
+		try {
+			out = new BufferedWriter(new FileWriter(".pid", false));
+		    out.write((int) pid);
+		}
+
+		catch (Exception e) {
+		    System.err.println("Error: " + e.getMessage());
+		}
+
+		finally {
+		    if(out != null) {
+		        out.close();
+		    }
+		}
+		
+		reload();
 	}
 	
-	static private CacheController _cache_controller;
-
+	public static void reload()
+	{	
+		try {
+			_cache_controller = new CacheController();
+		} catch (Exception e) {
+			System.out.println("Reload error: " + e.getMessage());
+		}
+	}
 }

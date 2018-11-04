@@ -26,7 +26,7 @@ public class CacheController {
 	
 	//! Max size of _instances = 1000
 	private List<Instance> _instances;
-	private ArrayList<Attribute> attributes;
+//	private ArrayList<Attribute> attributes;
 	
 	private Instances _persistent_instances;
 	

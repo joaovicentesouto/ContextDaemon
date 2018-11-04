@@ -9,6 +9,9 @@ import com.google.gson.Gson;
 
 public class NamedPipeReader {
 	
+	private BufferedReader _pipe_reader;
+	private String filename;
+	
 	public NamedPipeReader(String filename) throws IOException, InterruptedException {
 		super();
 		
@@ -33,7 +36,8 @@ public class NamedPipeReader {
 		
 		return gson.fromJson(msg, Message.class);
 	}
-
-	private BufferedReader _pipe_reader;
-	private String filename;
+	
+	public void close() throws Exception {
+		_pipe_reader.close();
+	}
 }
