@@ -54,9 +54,9 @@ public class CacheController {
 		super();
 
 		_learning = learning;
-//		_calendar.setTimeInMillis(System.currentTimeMillis());
-		_calendar.setTimeInMillis(1541368216256L);
-		System.out.println(_calendar.getTimeInMillis());
+		
+		 //! Ver o t do smartdata está em milisegundos
+		_calendar.setTimeInMillis(System.currentTimeMillis());
 		
 		try {
 			reload_backup();
@@ -109,47 +109,20 @@ public class CacheController {
 		_persistent_instances = aux;
 		
 		_persistent_instances.setClassIndex(_persistent_instances.numAttributes() - 1);
-		
-		System.out.println("Context: " + _persistent_instances.classIndex());
-//		
 		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
-		System.out.println("Context: " + _current_context.toString());
 //		
-		_learning = new MachineLearning(_persistent_instances);
+//		_learning = new MachineLearning(_persistent_instances);
 //		
 		_current_instances = new Instances(_persistent_instances);
 //		_current_instances.clear();
 	}
-	
-	//! Vou deixar o feature selection de lado por enquanto.
-	//! Problema em fazer o feature e salvar as instancias com
-	//! menos dados que o que podem vir a precisar depois.
-	//! Ver se fizemos apenas uma vez na mão o feature selection.
-//	private void feature_selection() {
-//		attributes = new ArrayList<Attribute>(
-//			Arrays.asList(
-//				new Attribute("internal_temperature"),	fica
-//				new Attribute("external_temperature"),	fica
-//				new Attribute("internal_humidity"),		fica
-//				new Attribute("external_humidity"),		fica
-//				new Attribute("second"),				sai
-//				new Attribute("minute"),				fica
-//				new Attribute("hour"),					fica
-//				new Attribute("day"),					sai
-//				new Attribute("week_day"),				fica
-//				new Attribute("month"),					sai
-//				new Attribute("ideal_temperature")		fica
-//			)
-//		);
-//		
-//		_persistent_instances = new Instances("weather", attributes, 11);
-//	}
 	
 	public synchronized void updateControl(SmartData data) { }
 
 	public synchronized void updateData(SmartData data) throws Exception
 	{	
 		//! Se já se passaram 30 segundos => constrói uma instância
+		System.out.println("Seco333: " + (data.getT() - _calendar.getTimeInMillis())/1000L);
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30) {
 			System.out.println("Seco333: " + (data.getT() - _calendar.getTimeInMillis())/1000L);
 			
@@ -164,11 +137,12 @@ public class CacheController {
 			instance.setValue(7, 22); //! Comando do usuário
 			
 			_current_instances.add(instance);
+			System.out.println("In: " + instance);
 			
 			_current_context = instance;
 			
 			//! Zera nova instância
-			_calendar.setTimeInMillis((data.getT() + 1) * 1000L);
+			_calendar.setTimeInMillis(data.getT() + 1);
 			reset_parameters();
 		}
 		
@@ -205,7 +179,7 @@ public class CacheController {
 		}
 		
 		//! Update learning model
-		if(_current_instances.size() >= 1000) {
+		if(_current_instances.size() >= 2) {
 			update_model();
 			_current_instances.clear();
 		}
@@ -219,6 +193,7 @@ public class CacheController {
 	
 	public synchronized void update_model()
 	{
+		System.out.println("UPDATING.......\n");
 		//! Update model
 		try {
 			_learning.update(_current_instances);			
