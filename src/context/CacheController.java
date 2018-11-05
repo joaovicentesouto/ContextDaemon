@@ -47,7 +47,7 @@ public class CacheController {
 
 		_learning = learning;
 	
-		_calendar.setTimeInMillis(System.currentTimeMillis());
+		_calendar.setTimeInMillis(1641568216256L);
 		
 		try {
 			reload_backup();
@@ -108,8 +108,6 @@ public class CacheController {
 	{	
 		//! Cria uma instancia que representa um intervalo de 30s
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30) {
-			System.out.println("Seco333: " + (data.getT() - _calendar.getTimeInMillis())/1000L);
-			
 			Instance instance = new DenseInstance(_persistent_instances.numAttributes());
 			
 			instance.setValue(0, avg_internal_temps);
@@ -166,10 +164,12 @@ public class CacheController {
 		
 		//! Caso o tamanho da cache atinga 1000 instâncias,
 		//! é executado o retreinamento da rede neural
-		if(_current_instances.size() >= 1000) {
+		if(_current_instances.size() >= 1) {
 			update_model();
 			_current_instances.clear();
 		}
+		
+		print_parameters();
 	}
 	
 	public synchronized Instance current_context() {
@@ -221,7 +221,7 @@ public class CacheController {
 	static int i = 0;
 	
 	private void print_parameters() {
-		System.out.println("Data " + i++);
+		System.out.println("Atualização das médias " + i++);
 		System.out.println("avg_internal_temps: " + avg_internal_temps);
 		System.out.println("avg_external_temps: " + avg_external_temps);
 		System.out.println("avg_internal_hums: " + avg_internal_hums);

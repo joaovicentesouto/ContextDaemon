@@ -50,11 +50,14 @@ public class Daemon {
 				break;
 
 			case DATA:
+				System.out.println("Requisição de dados:");
+				System.out.println("Mensagem: " + msg.toString());
 				
 				//! Executa a atualização da cache em paralelo
 				new Thread() {
 					public void run()
 					{
+						System.out.println("Thread inicializada para atualização da cache de dados!");
 						try {
 							_cache_controller.updateData(msg.getSmartData());
 						} catch (Exception e) {
