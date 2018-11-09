@@ -5,100 +5,81 @@ import java.io.FileWriter;
 
 import weka.core.Instance;
 
-public class Daemon {
-	
+public class Daemon
+{
 	static private MachineLearning _learning;
 	static private CacheController _cache_controller;
-	static private NamedPipeReader _pipe_reader;
-
+	static private NamedPipeReader _pipe_reader = null;
+	static private SynchronizedQueue _data_queue = null;
+	static private SynchronizedQueue _control_queue = null;
+	
 	public static void main(String[] args) throws Exception
 	{
-		System.out.println("Daemon up ...");		
+		System.out.println("Initiating Daemon ...");
+
+		services_up();
 		
-		System.out.println("Configuring ...");
-		configure();
-		
-		_pipe_reader = null;
-		
-		try {
-			_pipe_reader = new NamedPipeReader("myfifo");
-		} catch (Exception excp) {
-			System.out.println("Cannot open the pipe!");
-		}
-		
-		System.out.println("Services up ...");
+		System.out.println("Services executing ...");
 		
 		while (_pipe_reader != null)
 		{
 			System.out.println("Waiting requisitions ...");
 			
-			Message msg = _pipe_reader.receive();
+			//! Blocking receive
+			Message message = _pipe_reader.receive();
 			
-			switch (msg.getType())
+			switch (message.getType())
 			{
+			
+			//! Do we need that option? 
 			case START:
 				break;
 
 			case RESTART:
-				//! Recarrega a cache
-				reload();
+				services_down();
+				services_up();
 				break;
 
 			case FINISH:
-				//! Fecha o pipe
-				_pipe_reader.close();
+				services_down();
 				break;
 
 			case DATA:
-				System.out.println("Requisição de dados:");
-				System.out.println("Mensagem: " + msg.toString());
+				System.out.println("Recebimento de dados:");
+				System.out.println("Mensagem: " + message.toString());
 				
-				//! Executa a atualização da cache em paralelo
-				new Thread() {
-					public void run()
-					{
-						System.out.println("Thread inicializada para atualização da cache de dados!");
-						try {
-							_cache_controller.updateData(msg.getSmartData());
-						} catch (Exception e) {
-							System.out.println("Data cache error: " + e.getMessage());
-						}
-					}
-				}.start();
+				try {
+					_data_queue.enqueue(message);
+					_cache_controller.updateData(message.getSmartData());
+				}
+				catch (Exception e) {
+					System.out.println("Data cache error: " + e.getMessage());
+				}
 				
 				break;
 
 			case COMMAND:
+				System.out.println("Recebimento de commando:");
+				System.out.println("Mensagem: " + message.toString());
 				
-				//! Executa a atualização da cache em paralelo
-				new Thread() {
-					public void run()
-					{
-						try {
-							_cache_controller.updateControl(msg.getSmartData());
-						} catch (Exception e) {
-							System.out.println("Control cache error: " + e.getMessage());
-						}
-					}
-				}.start();
+				try {
+					_cache_controller.updateControl(message.getSmartData());
+				}
+				catch (Exception e) {
+					System.out.println("Control cache error: " + e.getMessage());
+				}
 				
 				break;
 			
 			case PREDICT:
+				System.out.println("Solicitação de predição:");
+				System.out.println("Mensagem: " + message.toString());
 
-				new Thread() {
-					public void run()
-					{
-						try {
-							Instance context = _cache_controller.current_context();
-							_learning.predict(context);
-							System.out.println("Predict: " + context.toString());
-						} catch (Exception e) {
-							System.out.println("Predict cache error: " + e.getMessage());
-						}
-					}
-				}.start();
+				Instance context = _cache_controller.current_context();
+				_learning.predict(context);
 				
+				System.out.println("Predict: " + context.toString());
+
 				break;
 
 			default:
@@ -107,11 +88,26 @@ public class Daemon {
 			}
 		}
 		
-		System.out.println("Daemon exit");
+		services_down();
+		System.out.println("Daemon exiting ...");
 	}
 	
-	public static void configure() throws Exception
-	{		
+	static void services_up() throws Exception
+	{
+		//! Initiating
+		try {
+			_pipe_reader = new NamedPipeReader("myfifo");
+		}
+		
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new Exception("Cannot open the pipe!");
+		}
+		
+		_data_queue = new SynchronizedQueue();
+		_control_queue = new SynchronizedQueue();
+		
+		//! Configuring
 		BufferedWriter out = null;
 		long pid = ProcessHandle.current().pid();
 		
@@ -119,25 +115,31 @@ public class Daemon {
 			out = new BufferedWriter(new FileWriter(".pid", false));
 		    out.write((int) pid);
 		}
+		
 		catch (Exception e) {
-		    System.err.println("Error: " + e.getMessage());
-		}
-		finally {
-		    if(out != null) {
-		        out.close();
-		    }
+			e.printStackTrace();
+		    throw new Exception("Cannot write .pid file!");
 		}
 		
-		reload();
-	}
-	
-	public static void reload()
-	{	
+		finally {
+		        out.close();
+		}
+		
+		//! Reloading
 		try {
 			_learning = new MachineLearning();
 			_cache_controller = new CacheController(_learning);
-		} catch (Exception e) {
-			System.out.println("Reload error: " + e.getMessage());
 		}
+		
+		catch (Exception e) {
+			e.printStackTrace();
+			throw new Exception("Cannot create learning and cache control objects!");
+		}
+	}
+	
+	static void services_down() throws Exception
+	{
+		if (_pipe_reader != null)
+			_pipe_reader.close();
 	}
 }
