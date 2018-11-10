@@ -36,6 +36,10 @@ public class CacheController {
 	private int _n_in_hum = 0;
 	private int _n_out_hum = 0;
 	
+	//! Current user command
+	private Double _current_ideal_temperature = 0.0;
+	private long _last_command_time = 0L;
+	
 	//! Responsável pela armazenamento do timestamp
 	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
@@ -97,12 +101,13 @@ public class CacheController {
 		
 		//! Assume sendo o contexto atual
 		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
+		_last_command_time = _calendar.getTimeInMillis();
 	}
 
 	public void update_data(SmartData data)
 	{
 		//! Cria uma instancia que representa um intervalo de 30s
-		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
+		if ((_calendar.getTimeInMillis() - data.getT())/1000L > 30)
 			create_context(data);
 		
 		switch (data.getX())
@@ -113,7 +118,8 @@ public class CacheController {
 			if (data.getUnit() == TEMPERATURE) {
 				_n_in_temp++;
 				_avg_internal_temps = _avg_internal_temps + (data.getValue() - _avg_internal_temps) / _n_in_temp;
-			} else {
+			}
+			else if (data.getUnit() == HUMIDITY) {
 				_n_in_hum++;
 				_avg_internal_hums = _avg_internal_hums + (data.getValue() - _avg_internal_hums) / _n_in_hum;
 			}
@@ -125,7 +131,8 @@ public class CacheController {
 			if (data.getUnit() == TEMPERATURE) {
 				_n_out_temp++;
 				_avg_external_temps = _avg_external_temps + (data.getValue() - _avg_external_temps) / _n_out_temp;
-			} else { //! HUMIDITY
+			}
+			else if (data.getUnit() == HUMIDITY) {
 				_n_out_hum++;
 				_avg_external_hums = _avg_external_hums + (data.getValue() - _avg_external_hums) / _n_out_hum;
 			}
@@ -134,6 +141,7 @@ public class CacheController {
 			
 		default:
 			System.err.println("Este dispositivo não deveria estar sendo monitorado!");
+			break;
 		}
 		
 		print_parameters();
@@ -141,6 +149,11 @@ public class CacheController {
 	
 	private void create_context(SmartData data)
 	{
+		if (_n_in_temp == 0 || _n_in_hum == 0 || _n_out_temp == 0 || _n_out_hum == 0) {
+			System.err.println("CacheController: Cannot create the context instance!");
+			return;
+		}
+		
 		Instance instance = new DenseInstance(_persistent_instances.numAttributes());
 		
 		instance.setValue(0, _avg_internal_temps);
@@ -150,7 +163,10 @@ public class CacheController {
 		instance.setValue(4, _calendar.get(Calendar.MINUTE));
 		instance.setValue(5, _calendar.get(Calendar.HOUR_OF_DAY));
 		instance.setValue(6, _calendar.get(Calendar.DAY_OF_WEEK));
-		instance.setValue(7, 22); //! Comando do usuário
+		
+		synchronized (_current_ideal_temperature) {
+			instance.setValue(7, _current_ideal_temperature); //! Comando do usuário
+		}
 		
 		//! Adiciona nas instâncias atuais
 		_current_instances.add(instance);
@@ -191,7 +207,10 @@ public class CacheController {
 	}
 	
 	public void update_control(SmartData data) {
-		
+		synchronized (_current_ideal_temperature) {
+			_current_ideal_temperature = data.getValue();
+			_last_command_time = _calendar.getTimeInMillis();
+		}
 	}
 	
 	public Instance current_context() {
@@ -208,6 +227,10 @@ public class CacheController {
 	
 	public Instances persistente_instances() {
 		return new Instances(_persistent_instances);
+	}
+	
+	public long last_command_time() {
+		return _last_command_time;
 	}
 	
 	private void reset_parameters() {

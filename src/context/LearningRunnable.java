@@ -1,5 +1,8 @@
 package context;
 
+import java.util.Calendar;
+import java.util.TimeZone;
+
 import weka.core.Instance;
 import weka.core.Instances;
 
@@ -11,6 +14,7 @@ public class LearningRunnable implements Runnable
 	private boolean stop = false;
 
 	static private Thread _worker = null;
+	static private Thread _watchmaker = null;
 
 	public LearningRunnable(CacheController cache_controller, SynchronizedQueue data_queue) {
 		super();
@@ -24,11 +28,35 @@ public class LearningRunnable implements Runnable
 	public void run()
 	{
 		System.out.println(" + Initiating Learning Thread ...");
+		
+		_watchmaker = new Thread() {
+			
+			private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+			
+			public void run() {
+				while (!stop) {
+					try {
+						wait(30000);  //! 30 segundos
+						
+						//! 30 minutos desde o último controle?
+						if (_cache_controller.last_command_time() - _calendar.getTimeInMillis() > 1.8e+6)
+						{
+							Instance c = predict();
+							_cache_controller.update_control(new SmartData(c.value(c.numAttributes()-1)));
+						}
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						break;
+					}
+				}
+			}
+		};
 
 		//! Update model
 		update_model(_cache_controller.persistente_instances());
 
-		while (true)
+		while (!stop)
 		{
 			//! Bloqueia se não tiver mensagens para processar
 			Message message;
@@ -37,9 +65,6 @@ public class LearningRunnable implements Runnable
 				message = _data_queue.dequeue();
 			}
 			catch (Exception e) {
-				if (stop)	//! Shutdown?
-					break;
-
 				e.printStackTrace();
 				continue;
 			}
@@ -81,10 +106,7 @@ public class LearningRunnable implements Runnable
 			public void run()
 			{
 				try {
-					synchronized (_learning)
-					{
-						_learning.update(instances);
-					}
+					_learning.update(instances);
 				}
 				catch (Exception e) {
 					System.err.println("LearningRunnable: Error on periodic update");
@@ -101,10 +123,7 @@ public class LearningRunnable implements Runnable
 		Instance context = _cache_controller.current_context();
 
 		try {
-			synchronized (_learning)
-			{
-				_learning.predict(context);
-			}
+			_learning.predict(context);
 		}
 		catch (Exception e) {
 			System.out.println("LearningRunnable: Error on predict");
