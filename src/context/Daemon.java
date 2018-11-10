@@ -99,7 +99,7 @@ public class Daemon
 		_control_queue = new SynchronizedQueue();
 		
 		//! Configuring
-		BufferedWriter out = null;
+		/*BufferedWriter out = null;
 		long pid = ProcessHandle.current().pid();
 		
 		try {
@@ -115,7 +115,7 @@ public class Daemon
 		finally {
 		        out.close();
 		}
-		
+		*/
 		//! Reaload
 		_cache_controller = new CacheController();
 		
