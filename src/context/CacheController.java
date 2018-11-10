@@ -27,14 +27,14 @@ public class CacheController {
 	private Instance _current_context = null;
 	
 	//! Armazena a média dos valores medidos num intervalo de 30s
-	private Double avg_internal_temps = 0.0;
-	private Double avg_external_temps = 0.0;
-	private Double avg_internal_hums = 0.0;
-	private Double avg_external_hums = 0.0;
-	private int n_in_temp = 0;
-	private int n_out_temp = 0;
-	private int n_in_hum = 0;
-	private int n_out_hum = 0;
+	private Double _avg_internal_temps = 0.0;
+	private Double _avg_external_temps = 0.0;
+	private Double _avg_internal_hums = 0.0;
+	private Double _avg_external_hums = 0.0;
+	private int _n_in_temp = 0;
+	private int _n_out_temp = 0;
+	private int _n_in_hum = 0;
+	private int _n_out_hum = 0;
 	
 	//! Responsável pela armazenamento do timestamp
 	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -103,29 +103,7 @@ public class CacheController {
 	{
 		//! Cria uma instancia que representa um intervalo de 30s
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
-		{
-			Instance instance = new DenseInstance(_persistent_instances.numAttributes());
-			
-			instance.setValue(0, avg_internal_temps);
-			instance.setValue(1, avg_external_temps);
-			instance.setValue(2, avg_internal_hums);
-			instance.setValue(3, avg_external_hums);
-			instance.setValue(4, _calendar.get(Calendar.MINUTE));
-			instance.setValue(5, _calendar.get(Calendar.HOUR_OF_DAY));
-			instance.setValue(6, _calendar.get(Calendar.DAY_OF_WEEK));
-			instance.setValue(7, 22); //! Comando do usuário
-			
-			//! Adiciona nas instâncias atuais
-			_current_instances.add(instance);
-			
-			//! Atualiza o contexto atual
-			_current_context = instance;
-			
-			//! Reseta parâmetros para nova instância
-			_calendar.setTimeInMillis(data.getT() + 1);
-			
-			reset_parameters();
-		}
+			create_context(data);
 		
 		switch (data.getX())
 		{
@@ -133,11 +111,11 @@ public class CacheController {
 		//! Interno
 		case 298:
 			if (data.getUnit() == TEMPERATURE) {
-				n_in_temp++;
-				avg_internal_temps = avg_internal_temps + (data.getValue() - avg_internal_temps) / n_in_temp;
+				_n_in_temp++;
+				_avg_internal_temps = _avg_internal_temps + (data.getValue() - _avg_internal_temps) / _n_in_temp;
 			} else {
-				n_in_hum++;
-				avg_internal_hums = avg_internal_hums + (data.getValue() - avg_internal_hums) / n_in_hum;
+				_n_in_hum++;
+				_avg_internal_hums = _avg_internal_hums + (data.getValue() - _avg_internal_hums) / _n_in_hum;
 			}
 			
 			break;
@@ -145,11 +123,11 @@ public class CacheController {
 		//! Externo
 		case 302:
 			if (data.getUnit() == TEMPERATURE) {
-				n_out_temp++;
-				avg_external_temps = avg_external_temps + (data.getValue() - avg_external_temps) / n_out_temp;
+				_n_out_temp++;
+				_avg_external_temps = _avg_external_temps + (data.getValue() - _avg_external_temps) / _n_out_temp;
 			} else { //! HUMIDITY
-				n_out_hum++;
-				avg_external_hums = avg_external_hums + (data.getValue() - avg_external_hums) / n_out_hum;
+				_n_out_hum++;
+				_avg_external_hums = _avg_external_hums + (data.getValue() - _avg_external_hums) / _n_out_hum;
 			}
 			
 			break;
@@ -159,6 +137,31 @@ public class CacheController {
 		}
 		
 		print_parameters();
+	}
+	
+	private void create_context(SmartData data)
+	{
+		Instance instance = new DenseInstance(_persistent_instances.numAttributes());
+		
+		instance.setValue(0, _avg_internal_temps);
+		instance.setValue(1, _avg_external_temps);
+		instance.setValue(2, _avg_internal_hums);
+		instance.setValue(3, _avg_external_hums);
+		instance.setValue(4, _calendar.get(Calendar.MINUTE));
+		instance.setValue(5, _calendar.get(Calendar.HOUR_OF_DAY));
+		instance.setValue(6, _calendar.get(Calendar.DAY_OF_WEEK));
+		instance.setValue(7, 22); //! Comando do usuário
+		
+		//! Adiciona nas instâncias atuais
+		_current_instances.add(instance);
+		
+		//! Atualiza o contexto atual
+		_current_context = instance;
+		
+		//! Reseta parâmetros para nova instância
+		_calendar.setTimeInMillis(data.getT() + 1);
+		
+		reset_parameters();
 	}
 	
 	public void persist_instances()
@@ -187,42 +190,48 @@ public class CacheController {
 		_current_instances.clear();
 	}
 	
-	public void update_control(SmartData data) { }
-	
-	public Instances current_instances() {
-		return _current_instances;
-	}
-	
-	public Instances persistente_instances() {
-		return _persistent_instances;
+	public void update_control(SmartData data) {
+		
 	}
 	
 	public Instance current_context() {
 		return _current_context;
 	}
 	
+	public Instances current_instances() {
+		return new Instances(_current_instances);
+	}
+	
+	public int current_size() {
+		return _current_instances.size();
+	}
+	
+	public Instances persistente_instances() {
+		return new Instances(_persistent_instances);
+	}
+	
 	private void reset_parameters() {
-		avg_internal_temps = 0.0;
-		avg_external_temps = 0.0;
-		avg_internal_hums = 0.0;
-		avg_external_hums = 0.0;
-		n_in_temp = 0;
-		n_out_temp = 0;
-		n_in_hum = 0;
-		n_out_hum = 0;
+		_avg_internal_temps = 0.0;
+		_avg_external_temps = 0.0;
+		_avg_internal_hums = 0.0;
+		_avg_external_hums = 0.0;
+		_n_in_temp = 0;
+		_n_out_temp = 0;
+		_n_in_hum = 0;
+		_n_out_hum = 0;
 	}
 	
 	static int i = 0;
 	private void print_parameters() {
 		System.out.println("Atualização das médias " + i++);
-		System.out.println("avg_internal_temps: " + avg_internal_temps);
-		System.out.println("avg_external_temps: " + avg_external_temps);
-		System.out.println("avg_internal_hums: " + avg_internal_hums);
-		System.out.println("avg_external_hums: " + avg_external_hums);
-		System.out.println("n_in_temp: " + n_in_temp);
-		System.out.println("n_out_temp: " + n_out_temp);
-		System.out.println("n_in_hum: " + n_in_hum);
-		System.out.println("n_out_hum: " + n_out_hum);
+		System.out.println("_avg_internal_temps: " + _avg_internal_temps);
+		System.out.println("_avg_external_temps: " + _avg_external_temps);
+		System.out.println("_avg_internal_hums: " + _avg_internal_hums);
+		System.out.println("_avg_external_hums: " + _avg_external_hums);
+		System.out.println("_n_in_temp: " + _n_in_temp);
+		System.out.println("_n_out_temp: " + _n_out_temp);
+		System.out.println("_n_in_hum: " + _n_in_hum);
+		System.out.println("_n_out_hum: " + _n_out_hum);
 		System.out.println("");
 	}
 }
