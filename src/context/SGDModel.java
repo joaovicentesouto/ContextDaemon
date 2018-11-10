@@ -58,7 +58,7 @@ public class SGDModel implements LearningModel
 		}
 		
 		try {
-			temp.setLossFunction(new SelectedTag(SGD.HUBER, SGD.TAGS_SELECTION));
+			temp.setLossFunction(new SelectedTag(SGD.SQUAREDLOSS, SGD.TAGS_SELECTION));
 			temp.buildClassifier(data);
 			//temp.getOptions();
 		} catch (Exception e) {
