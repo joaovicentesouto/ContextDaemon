@@ -26,6 +26,11 @@ public class SmartData {
 		this.confidence = confidence;
 		this.dev = dev;
 	}
+	
+	public SmartData(double value) {
+		super();
+		this.value = value;
+	}
 
 	public String getVersion() {
 		return version;

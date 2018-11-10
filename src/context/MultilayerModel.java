@@ -7,19 +7,20 @@ import weka.classifiers.functions.MultilayerPerceptron;
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class MachineLearning {
-
+public class MultilayerModel implements LearningModel {
+	
 	MultilayerPerceptron _classifier;
 	
-	public MachineLearning() {
+	public MultilayerModel() {
 		_classifier = new MultilayerPerceptron();
 	}
 	
-	public MachineLearning(Instances data) throws Exception {
+	public MultilayerModel(Instances data) throws Exception {
 		_classifier = new MultilayerPerceptron();
 		update(data);
 	}
-	
+
+	@Override
 	public void update(Instances data) throws Exception
 	{
 		MultilayerPerceptron temp;
@@ -48,7 +49,7 @@ public class MachineLearning {
 		int folds = 10;
 
 		// Validação do modelo
-		eval.crossValidateModel(_classifier, data, folds, rand);
+		eval.crossValidateModel(temp, data, folds, rand);
 		
 		System.out.println("Erro: " + eval.errorRate());
 		System.out.println("Erro: " + eval.toSummaryString());
@@ -57,13 +58,16 @@ public class MachineLearning {
 			_classifier = temp;
 		}
 	}
-	
-	public void relearning(Instances data) throws Exception {
+
+	@Override
+	public void relearning(Instances data) throws Exception
+	{
 		//! Precisa aprender do zero se for SGD
 		update(data);
 	}
-	
-	public synchronized void predict(Instance data) throws Exception
+
+	@Override
+	public void predict(Instance data) throws Exception
 	{
 		synchronized (this) {
 			//! Atualiza a própria instância (Verificar)
