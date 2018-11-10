@@ -70,7 +70,7 @@ public class Daemon
 				System.out.println("Mensagem: " + message.toString());
 
 				Instance context = _learning.predict();
-				System.out.println("Predict: " + context.toString());
+				System.out.println("Ideal temperature: " + context.value(context.numAttributes()-1));
 
 				break;
 
