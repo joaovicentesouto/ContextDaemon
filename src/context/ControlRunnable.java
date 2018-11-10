@@ -15,7 +15,9 @@ public class ControlRunnable implements Runnable
 
 	@Override
 	public void run()
-	{	
+	{
+		System.out.println(" * Initiating Control Thread ...");
+		
 		while (true)
 		{
 			//! Bloqueia se não tiver mensagens para processar
@@ -40,6 +42,8 @@ public class ControlRunnable implements Runnable
 
 			_cache_controller.update_control(message.getSmartData());
 		}
+		
+		System.out.println(" * Control Thread exiting ...");
 	}
 
 	public void shutdown()

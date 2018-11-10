@@ -44,8 +44,8 @@ public class Daemon
 				shutdown();
 				setup();
 				break;
-
-			case FINISH:
+				
+			case STOP:
 				shutdown();
 				break;
 
@@ -80,7 +80,6 @@ public class Daemon
 			}
 		}
 		
-		shutdown();
 		System.out.println("Daemon exiting ...");
 	}
 	
@@ -135,6 +134,8 @@ public class Daemon
 	{
 		if (_pipe_reader != null)
 			_pipe_reader.close();
+		
+		_pipe_reader = null;
 		
 		_learning.shutdown();
 		_controlling.shutdown();

@@ -21,6 +21,8 @@ public class LearningRunnable implements Runnable
 	@Override
 	public void run()
 	{
+		System.out.println(" + Initiating Learning Thread ...");
+		
 		//! Update model
 		update_model(_cache_controller.persistente_instances());
 
@@ -54,6 +56,8 @@ public class LearningRunnable implements Runnable
 				update_model(_cache_controller.current_instances());
 			}
 		}
+		
+		System.out.println(" + Learning Thread exiting ...");
 	}
 	
 	private synchronized void update_model(Instances instances)

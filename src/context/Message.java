@@ -9,10 +9,10 @@ public class Message {
 		START (0),
 		
 		@SerializedName("1")
-		FINISH (1),
+		RESTART (1),
 		
 		@SerializedName("2")
-		RESTART (2),
+		STOP (2),
 		
 		@SerializedName("3")
 		DATA (3),
