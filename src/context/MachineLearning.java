@@ -17,22 +17,25 @@ public class MachineLearning {
 	
 	public MachineLearning(Instances data) throws Exception {
 		_classifier = new MultilayerPerceptron();
-		init(data);
-	}
-	
-	public void init(Instances data) throws Exception {
 		update(data);
 	}
 	
-	public synchronized void update(Instances data) throws Exception
+	public void update(Instances data) throws Exception
 	{
+		MultilayerPerceptron temp;
+		
+		synchronized (this) {
+			temp = (MultilayerPerceptron) MultilayerPerceptron.makeCopy(_classifier);
+		}
+		
 		//! Sem camadas intermediárias
-		this._classifier.setHiddenLayers("0");
+		temp.setHiddenLayers("1");
 		
 		try {
-			this._classifier.buildClassifier(data);
+			temp.buildClassifier(data);
 		} catch (Exception e) {
 			e.printStackTrace();
+			throw new Exception("MachineLearning: Error on update!");
 		}
 
 		// Cria um objeto manipular a rede neural
@@ -49,10 +52,18 @@ public class MachineLearning {
 		
 		System.out.println("Erro: " + eval.errorRate());
 		System.out.println("Erro: " + eval.toSummaryString());
+		
+		synchronized (this) {
+			_classifier = temp;
+		}
 	}
 	
-	public synchronized void predict(Instance data) throws Exception {
-		this._classifier.classifyInstance(data);
+	public synchronized void predict(Instance data) throws Exception
+	{
+		synchronized (this) {
+			//! Atualiza o próprio objeto (Verificar)
+			_classifier.classifyInstance(data);
+		}
 	}
 
 }

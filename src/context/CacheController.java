@@ -100,7 +100,8 @@ public class CacheController {
 	public synchronized void update_data(SmartData data) throws Exception
 	{
 		//! Cria uma instancia que representa um intervalo de 30s
-		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30) {
+		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
+		{
 			Instance instance = new DenseInstance(_persistent_instances.numAttributes());
 			
 			instance.setValue(0, avg_internal_temps);
@@ -120,9 +121,9 @@ public class CacheController {
 			
 			//! Reseta parâmetros para nova instância
 			_calendar.setTimeInMillis(data.getT() + 1);
+			
 			reset_parameters();
 		}
-		
 		
 		switch (data.getX())
 		{
@@ -155,11 +156,7 @@ public class CacheController {
 			throw new Exception("Este dispositivo não deveria estar sendo monitorado!");
 		}
 		
-//		print_parameters();
-	}
-	
-	public synchronized Instance current_context() {
-		return _current_context;
+		print_parameters();
 	}
 	
 	public void persist_instances()
@@ -192,6 +189,10 @@ public class CacheController {
 	
 	public Instances current_instances() {
 		return _current_instances;
+	}
+	
+	public Instance current_context() {
+		return _current_context;
 	}
 	
 	private void reset_parameters() {

@@ -2,15 +2,15 @@ package context;
 
 public class ControlProcess implements Runnable
 {
-	static private CacheController _cache_controller;
-	static private SynchronizedQueue _control_queue;
+	static private CacheController _cache_controller = null;
+	static private SynchronizedQueue _control_queue = null;
 	private boolean stop = false;
 	
 	public ControlProcess(CacheController cache_controller, SynchronizedQueue control_queue) throws Exception {
 		super();
 		
-		this._cache_controller = cache_controller;
-		this._control_queue = control_queue;
+		_cache_controller = cache_controller;
+		_control_queue = control_queue;
 	}
 
 	@Override

@@ -12,8 +12,8 @@ public class LearningProcess implements Runnable
 	public LearningProcess(CacheController cache_controller, SynchronizedQueue data_queue) {
 		super();
 		
-		this._data_queue = data_queue;
-		this._cache_controller = cache_controller;
+		_data_queue = data_queue;
+		_cache_controller = cache_controller;
 		_learning = new MachineLearning();
 	}
 

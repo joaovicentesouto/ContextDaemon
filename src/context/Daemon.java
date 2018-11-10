@@ -3,14 +3,15 @@ package context;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
-import weka.core.Instance;
-
 public class Daemon
 {
-	static private NamedPipeReader _pipe_reader = null;
+	static private NamedPipeReader   _pipe_reader 	   = null;
+	static private SynchronizedQueue _data_queue   	   = null;
+	static private SynchronizedQueue _control_queue    = null;
+	static private CacheController   _cache_controller = null;
 	
-	static private SynchronizedQueue _data_queue = null;
-	static private SynchronizedQueue _control_queue = null;
+	static private LearningProcess   _learning_process = null;
+	static private ControlProcess    _control_process  = null;
 	
 	public static void main(String[] args) throws Exception
 	{
@@ -64,7 +65,6 @@ public class Daemon
 				System.out.println("Mensagem: " + message.toString());
 
 //				Instance context = _learning.predict(context);
-				
 //				System.out.println("Predict: " + context.toString());
 
 				break;
@@ -111,6 +111,15 @@ public class Daemon
 		finally {
 		        out.close();
 		}
+		
+		//! Reaload
+		_cache_controller = new CacheController();
+		
+		_learning_process = new LearningProcess(_cache_controller, _data_queue);
+		_control_process = new ControlProcess(_cache_controller, _control_queue);
+		
+//		_learning_process.start();
+//		_control_process.start();
 	}
 	
 	static void services_down() throws Exception
