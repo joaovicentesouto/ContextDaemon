@@ -2,14 +2,14 @@ package context;
 
 import weka.core.Instance;
 
-public class LearningProcess implements Runnable
+public class LearningRunnable implements Runnable
 {
 	static private MachineLearning _learning;
 	static private CacheController _cache_controller;
 	static private SynchronizedQueue _data_queue;
 	private boolean stop = false;
 	
-	public LearningProcess(CacheController cache_controller, SynchronizedQueue data_queue) {
+	public LearningRunnable(CacheController cache_controller, SynchronizedQueue data_queue) {
 		super();
 		
 		_data_queue = data_queue;
@@ -20,26 +20,34 @@ public class LearningProcess implements Runnable
 	@Override
 	public void run()
 	{		
-		synchronized (this)
+		while (true)
 		{
-			while (!stop)
-			{
-				//! Bloqueia se não tiver mensagens para processar
-				Message message = _data_queue.dequeue();
-
-				try {
-					//! Unica thread que irá executar update_data
-					_cache_controller.update_data(message.getSmartData());
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-				}
-				
-				//! Caso o tamanho da cache atinga 1000 instâncias,
-				//! é executado o retreinamento da rede neural
-				if(_cache_controller.current_instances().size() >= 1) {
-					update_model();
-				}
+			//! Bloqueia se não tiver mensagens para processar
+			Message message;
+			
+			try {
+				 message = _data_queue.dequeue();
+        	}
+        	catch (Exception e) {
+        		if (stop)	//! Shutdown?
+					break;
+        		
+        		e.printStackTrace();
+        		continue;
+        	}
+			
+			//! Shutdown?
+			synchronized (this) {
+				if (stop)
+					break;
+			}
+			
+			_cache_controller.update_data(message.getSmartData());
+			
+			//! Caso o tamanho da cache atinga 1000 instâncias,
+			//! é executado o retreinamento da rede neural
+			if(_cache_controller.current_instances().size() >= 1000) {
+				update_model();
 			}
 		}
 	}

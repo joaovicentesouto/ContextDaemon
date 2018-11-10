@@ -97,7 +97,7 @@ public class CacheController {
 		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
 	}
 
-	public synchronized void update_data(SmartData data) throws Exception
+	public synchronized void update_data(SmartData data)
 	{
 		//! Cria uma instancia que representa um intervalo de 30s
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
@@ -153,7 +153,7 @@ public class CacheController {
 			break;
 			
 		default:
-			throw new Exception("Este dispositivo não deveria estar sendo monitorado!");
+			System.err.println("Este dispositivo não deveria estar sendo monitorado!");
 		}
 		
 		print_parameters();

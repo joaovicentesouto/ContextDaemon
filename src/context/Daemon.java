@@ -3,6 +3,8 @@ package context;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
+import weka.core.Instance;
+
 public class Daemon
 {
 	static private NamedPipeReader   _pipe_reader 	   = null;
@@ -10,14 +12,17 @@ public class Daemon
 	static private SynchronizedQueue _control_queue    = null;
 	static private CacheController   _cache_controller = null;
 	
-	static private LearningProcess   _learning_process = null;
-	static private ControlProcess    _control_process  = null;
+	static private LearningRunnable  _learning = null;
+	static private ControlRunnable   _controlling  = null;
+	
+	static private Thread _learning_thread = null;
+	static private Thread _control_thread  = null;
 	
 	public static void main(String[] args) throws Exception
 	{
 		System.out.println("Initiating Daemon ...");
 
-		services_up();
+		setup();
 		
 		System.out.println("Services executing ...");
 		
@@ -36,12 +41,12 @@ public class Daemon
 				break;
 
 			case RESTART:
-				services_down();
-				services_up();
+				shutdown();
+				setup();
 				break;
 
 			case FINISH:
-				services_down();
+				shutdown();
 				break;
 
 			case DATA:
@@ -64,8 +69,8 @@ public class Daemon
 				System.out.println("Solicitação de predição:");
 				System.out.println("Mensagem: " + message.toString());
 
-//				Instance context = _learning.predict(context);
-//				System.out.println("Predict: " + context.toString());
+				Instance context = _learning.predict();
+				System.out.println("Predict: " + context.toString());
 
 				break;
 
@@ -75,11 +80,11 @@ public class Daemon
 			}
 		}
 		
-		services_down();
+		shutdown();
 		System.out.println("Daemon exiting ...");
 	}
 	
-	static void services_up() throws Exception
+	static void setup() throws Exception
 	{
 		//! Initiating
 		try {
@@ -115,16 +120,26 @@ public class Daemon
 		//! Reaload
 		_cache_controller = new CacheController();
 		
-		_learning_process = new LearningProcess(_cache_controller, _data_queue);
-		_control_process = new ControlProcess(_cache_controller, _control_queue);
+		//! Runnables 
+		_learning = new LearningRunnable(_cache_controller, _data_queue);
+		_controlling = new ControlRunnable(_cache_controller, _control_queue);
 		
-//		_learning_process.start();
-//		_control_process.start();
+		_learning_thread = new Thread(_learning);
+		_control_thread = new Thread(_controlling);
+		
+		_learning_thread.start();
+		_control_thread.start();
 	}
 	
-	static void services_down() throws Exception
+	static void shutdown() throws Exception
 	{
 		if (_pipe_reader != null)
 			_pipe_reader.close();
+		
+		_learning.shutdown();
+		_controlling.shutdown();
+		
+		_learning_thread.join();
+		_control_thread.join();
 	}
 }

@@ -17,22 +17,13 @@ public class SynchronizedQueue
 		}
 	}
 	
-	Message dequeue()
+	Message dequeue() throws InterruptedException
 	{
 		synchronized (this)
 		{
 			//! Needs wait?
-            if (_queue.isEmpty())
-            {
-            	try {
-            		wait();
-            	}
-            	catch (Exception e) {
-            		e.printStackTrace();
-            		
-            		//! Try again
-            		return dequeue();
-            	}
+            if (_queue.isEmpty()) {
+            	wait();
             }
             	
             return _queue.remove();
