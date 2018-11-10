@@ -8,7 +8,7 @@ import weka.core.Instances;
 
 public class LearningRunnable implements Runnable
 {
-	static private MachineLearning   _learning;
+	static private LearningModel   _learning;
 	static private CacheController 	 _cache_controller;
 	static private SynchronizedQueue _data_queue;
 	private boolean stop = false;
@@ -21,7 +21,13 @@ public class LearningRunnable implements Runnable
 
 		_data_queue = data_queue;
 		_cache_controller = cache_controller;
-		_learning = new MachineLearning();
+		
+		try {
+			_learning = new SGDModel(_cache_controller.persistente_instances());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -48,11 +54,14 @@ public class LearningRunnable implements Runnable
 							SmartData command = new SmartData(c.value(c.numAttributes()-1));
 							_cache_controller.update_control(command, false);
 						}
+						
+						System.out.println("Eu sai do wait sem inte");
 					}
 					catch (InterruptedException e) {
 						// TODO Auto-generated catch block
-						e.printStackTrace();
-						break;
+//						e.printStackTrace();
+						System.out.println("Eu sai do wait por uma interrupção");
+//						break;
 					}
 				}
 			}
@@ -159,7 +168,7 @@ public class LearningRunnable implements Runnable
 		}
 	}
 	
-	public MachineLearning learning() {
+	public LearningModel learning() {
 		return _learning;
 	}
 }

@@ -2,13 +2,13 @@ package context;
 
 public class ControlRunnable implements Runnable
 {
-	static private MachineLearning 	 _learning		   = null;
+	static private LearningModel 	 _learning		   = null;
 	static private CacheController 	 _cache_controller = null;
 	static private SynchronizedQueue _control_queue    = null;
 	
 	private boolean stop = false;
 
-	public ControlRunnable(CacheController cache_controller, SynchronizedQueue control_queue, MachineLearning learning) throws Exception {
+	public ControlRunnable(CacheController cache_controller, SynchronizedQueue control_queue, LearningModel learning) throws Exception {
 		super();
 		_cache_controller = cache_controller;
 		_control_queue = control_queue;

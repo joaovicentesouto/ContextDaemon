@@ -196,6 +196,12 @@ public class CacheController
 		if (from_user) {
 			//! Precisa modificar alguns valores?
 			//! Tipo, todas as horas iguais a esse data tem a mesma temperatura!
+			
+			for (Instance i : _persistent_instances) {
+				if (i.value(0) == 0.0) {
+					
+				}
+			}
 		}
 		
 		synchronized (_current_ideal_temperature) {
