@@ -139,6 +139,9 @@ public class Daemon
 		_learning.shutdown();
 		_controlling.shutdown();
 		
+		_learning_thread.interrupt();
+		_control_thread.interrupt();
+		
 		_learning_thread.join();
 		_control_thread.join();
 	}

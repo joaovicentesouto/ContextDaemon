@@ -19,7 +19,10 @@ public class LearningRunnable implements Runnable
 
 	@Override
 	public void run()
-	{		
+	{
+		//! Update model
+		update_model();
+
 		while (true)
 		{
 			//! Bloqueia se não tiver mensagens para processar

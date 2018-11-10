@@ -18,26 +18,26 @@ public class CacheController {
 	static long HUMIDITY    = 2224179500L; //! VERIFICAR
 	
 	//! Guarda o lote de novas instancias
-	private Instances _current_instances;
+	private Instances _current_instances = null;
 	
 	//! Guarda a cache persistente em memória (espelho do que existe no disco)
-	private Instances _persistent_instances;
-	
-	//! Armazena a média dos valores medidos num intervalo de 30s
-	private Double avg_internal_temps;
-	private Double avg_external_temps;
-	private Double avg_internal_hums;
-	private Double avg_external_hums;
-	private int n_in_temp;
-	private int n_out_temp;
-	private int n_in_hum;
-	private int n_out_hum;
-	
-	//! Responsável pela armazenamento do timestamp
-	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+	private Instances _persistent_instances = null;
 	
 	//! Contexto atual
 	private Instance _current_context = null;
+	
+	//! Armazena a média dos valores medidos num intervalo de 30s
+	private Double avg_internal_temps = 0.0;
+	private Double avg_external_temps = 0.0;
+	private Double avg_internal_hums = 0.0;
+	private Double avg_external_hums = 0.0;
+	private int n_in_temp = 0;
+	private int n_out_temp = 0;
+	private int n_in_hum = 0;
+	private int n_out_hum = 0;
+	
+	//! Responsável pela armazenamento do timestamp
+	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
 	public CacheController() throws Exception {
 		super();
@@ -56,38 +56,40 @@ public class CacheController {
 	{	
 		//! Carrega instancias persistentes
 		DataSource source;
-		Instances aux;
+		Instances cache;
 		
 		try {
 			source = new DataSource("cache.arff");
-			aux = source.getDataSet();
+			cache = source.getDataSet();
 		} catch (Exception e) {
 			throw new Exception("CacheController: cache.arff failed!");
 		} 
 		
 		//! Os dados da cache persistente são insuficientes?
-		if (aux.size() < 1000)
+		if (cache.size() < 1000)
 		{
+			Instances default_instances;
+			
 			try {
 				source = new DataSource("default.arff");
-				_persistent_instances = source.getDataSet();
-			} catch (Exception e) {
+				default_instances = source.getDataSet();
+			}
+			catch (Exception e) {
 				throw new Exception("CacheController: default.arff failed!");
 			}
 
-			_persistent_instances.setClassIndex(aux.numAttributes() - 1);
+			default_instances.setClassIndex(cache.numAttributes() - 1);
 			
-			Iterator<Instance> it = _persistent_instances.iterator();
+			Iterator<Instance> it = default_instances.iterator();
 			
 			//! Completa instancias utiliando as default
-			while(it.hasNext() && _persistent_instances.size() < 1000)
-			{
+			while(it.hasNext() && cache.size() < 1000) {
 				Instance i = it.next();
-				aux.add(i);
+				cache.add(i);
 			}
 		}
 		
-		_persistent_instances = aux;
+		_persistent_instances = cache;
 		
 		//! Configura o espelho da cache persistente
 		_persistent_instances.setClassIndex(_persistent_instances.numAttributes() - 1);
@@ -97,7 +99,7 @@ public class CacheController {
 		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
 	}
 
-	public synchronized void update_data(SmartData data)
+	public void update_data(SmartData data)
 	{
 		//! Cria uma instancia que representa um intervalo de 30s
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
