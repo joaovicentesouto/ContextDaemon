@@ -1,6 +1,7 @@
 package context;
 
 import weka.core.Instance;
+import weka.core.Instances;
 
 public class LearningRunnable implements Runnable
 {
@@ -21,7 +22,7 @@ public class LearningRunnable implements Runnable
 	public void run()
 	{
 		//! Update model
-		update_model();
+		update_model(_cache_controller.persistente_instances());
 
 		while (true)
 		{
@@ -50,18 +51,18 @@ public class LearningRunnable implements Runnable
 			//! Caso o tamanho da cache atinga 1000 instâncias,
 			//! é executado o retreinamento da rede neural
 			if(_cache_controller.current_instances().size() >= 1000) {
-				update_model();
+				update_model(_cache_controller.current_instances());
 			}
 		}
 	}
 	
-	private synchronized void update_model()
+	private synchronized void update_model(Instances instances)
 	{
 		//! Atualiza o modelo
 		try {
-			_learning.update(_cache_controller.current_instances());			
+			_learning.update(instances);			
 		} catch (Exception e) {
-			System.out.println("LearningProcess: Error on periodic update");
+			System.out.println("LearningRunnable: Error on periodic update");
 			e.printStackTrace();
 		}
 		
@@ -77,7 +78,7 @@ public class LearningRunnable implements Runnable
 			_learning.predict(context);
 		}
 		catch (Exception e) {
-			System.out.println("LearningProcess: Error on predict");
+			System.out.println("LearningRunnable: Error on predict");
 			e.printStackTrace();
 		}
 

@@ -193,6 +193,10 @@ public class CacheController {
 		return _current_instances;
 	}
 	
+	public Instances persistente_instances() {
+		return _persistent_instances;
+	}
+	
 	public Instance current_context() {
 		return _current_context;
 	}
