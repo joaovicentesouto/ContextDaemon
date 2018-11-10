@@ -2,15 +2,17 @@ package context;
 
 public class ControlRunnable implements Runnable
 {
-	static private CacheController _cache_controller = null;
-	static private SynchronizedQueue _control_queue = null;
+	static private MachineLearning 	 _learning		   = null;
+	static private CacheController 	 _cache_controller = null;
+	static private SynchronizedQueue _control_queue    = null;
+	
 	private boolean stop = false;
 
-	public ControlRunnable(CacheController cache_controller, SynchronizedQueue control_queue) throws Exception {
+	public ControlRunnable(CacheController cache_controller, SynchronizedQueue control_queue, MachineLearning learning) throws Exception {
 		super();
-
 		_cache_controller = cache_controller;
 		_control_queue = control_queue;
+		_learning = learning;
 	}
 
 	@Override
@@ -40,7 +42,17 @@ public class ControlRunnable implements Runnable
 					break;
 			}
 
-			_cache_controller.update_control(message.getSmartData());
+			_cache_controller.update_control(message.getSmartData(), true);
+			
+			//! Se mandou comando é porque modelo errou!
+			try {
+				_learning.relearning(_cache_controller.persistente_instances());
+			}
+			catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
 		
 		exiting();

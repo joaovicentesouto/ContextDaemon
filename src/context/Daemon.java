@@ -121,7 +121,7 @@ public class Daemon
 		
 		//! Runnables 
 		_learning = new LearningRunnable(_cache_controller, _data_queue);
-		_controlling = new ControlRunnable(_cache_controller, _control_queue);
+		_controlling = new ControlRunnable(_cache_controller, _control_queue, _learning.learning());
 		
 		_learning_thread = new Thread(_learning);
 		_control_thread = new Thread(_controlling);

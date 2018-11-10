@@ -58,6 +58,11 @@ public class MachineLearning {
 		}
 	}
 	
+	public void relearning(Instances data) throws Exception {
+		//! Precisa aprender do zero se for SGD
+		update(data);
+	}
+	
 	public synchronized void predict(Instance data) throws Exception
 	{
 		synchronized (this) {

@@ -8,8 +8,8 @@ import weka.core.Instances;
 
 public class LearningRunnable implements Runnable
 {
-	static private MachineLearning _learning;
-	static private CacheController _cache_controller;
+	static private MachineLearning   _learning;
+	static private CacheController 	 _cache_controller;
 	static private SynchronizedQueue _data_queue;
 	private boolean stop = false;
 
@@ -29,22 +29,27 @@ public class LearningRunnable implements Runnable
 	{
 		System.out.println(" + Initiating Learning Thread ...");
 		
+		//! Update model
+		update_model(_cache_controller.persistente_instances());
+		
 		_watchmaker = new Thread() {
-			
 			private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 			
 			public void run() {
-				while (!stop) {
+				while (!stop)
+				{
 					try {
 						wait(30000);  //! 30 segundos
 						
 						//! 30 minutos desde o último controle?
-						if (_cache_controller.last_command_time() - _calendar.getTimeInMillis() > 1.8e+6)
+						if (_calendar.getTimeInMillis() - _cache_controller.last_command_time() > 1.8e+6)
 						{
 							Instance c = predict();
-							_cache_controller.update_control(new SmartData(c.value(c.numAttributes()-1)));
+							SmartData command = new SmartData(c.value(c.numAttributes()-1));
+							_cache_controller.update_control(command, false);
 						}
-					} catch (InterruptedException e) {
+					}
+					catch (InterruptedException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 						break;
@@ -52,9 +57,10 @@ public class LearningRunnable implements Runnable
 				}
 			}
 		};
+		
+		_watchmaker.start();
 
-		//! Update model
-		update_model(_cache_controller.persistente_instances());
+		//! ================= Master loop ========================
 
 		while (!stop)
 		{
@@ -145,5 +151,15 @@ public class LearningRunnable implements Runnable
 	private void exiting() {
 		//! Reset current cache
 		_cache_controller.persist_instances();
+		
+		try {
+			_watchmaker.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public MachineLearning learning() {
+		return _learning;
 	}
 }
