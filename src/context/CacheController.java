@@ -38,29 +38,22 @@ public class CacheController {
 	
 	//! Contexto atual
 	private Instance _current_context = null;
-	
-	//! Objeto de aprendizado (guarda o modelo)
-	private MachineLearning _learning = null;
 
-	public CacheController(MachineLearning learning) throws Exception {
+	public CacheController() throws Exception {
 		super();
-
-		_learning = learning;
-	
-		_calendar.setTimeInMillis(1641568216256L);
 		
 		try {
 			reload_backup();
 			_current_instances.clear();
 		} catch (Exception e) {
-			throw e;
+			throw new Exception("CacheController: error on contructor!");
 		}
 		
 		reset_parameters();
 	}
 	
-	private void reload_backup() throws Exception {
-		
+	private void reload_backup() throws Exception
+	{	
 		//! Carrega instancias persistentes
 		DataSource source;
 		Instances aux;
@@ -69,7 +62,7 @@ public class CacheController {
 			source = new DataSource("cache.arff");
 			aux = source.getDataSet();
 		} catch (Exception e) {
-			throw new Exception("cache.arff failed!");
+			throw new Exception("CacheController: cache.arff failed!");
 		} 
 		
 		//! Os dados da cache persistente são insuficientes?
@@ -79,7 +72,7 @@ public class CacheController {
 				source = new DataSource("default.arff");
 				_persistent_instances = source.getDataSet();
 			} catch (Exception e) {
-				throw new Exception("default.arff failed!");
+				throw new Exception("CacheController: default.arff failed!");
 			}
 
 			_persistent_instances.setClassIndex(aux.numAttributes() - 1);
@@ -104,8 +97,8 @@ public class CacheController {
 		_current_context = _persistent_instances.get(_persistent_instances.size()-1);
 	}
 
-	public synchronized void updateData(SmartData data) throws Exception
-	{	
+	public synchronized void update_data(SmartData data) throws Exception
+	{
 		//! Cria uma instancia que representa um intervalo de 30s
 		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30) {
 			Instance instance = new DenseInstance(_persistent_instances.numAttributes());
@@ -162,35 +155,21 @@ public class CacheController {
 			throw new Exception("Este dispositivo não deveria estar sendo monitorado!");
 		}
 		
-		//! Caso o tamanho da cache atinga 1000 instâncias,
-		//! é executado o retreinamento da rede neural
-		if(_current_instances.size() >= 1) {
-			update_model();
-			_current_instances.clear();
-		}
-		
-		print_parameters();
+//		print_parameters();
 	}
 	
 	public synchronized Instance current_context() {
 		return _current_context;
 	}
 	
-	public synchronized void update_model()
+	public void persist_instances()
 	{
-		//! Atualiza o modelo
-		try {
-			_learning.update(_current_instances);			
-		} catch (Exception e) {
-			System.out.println("Error on periodic update: " + e.getMessage());
-		}
-		
 		//! Elimina as instâncias mais antigas.
 		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia
 		int limit = _persistent_instances.size() - 2280;
 		for (int index = 0; index < limit; index++)
-			_persistent_instances.remove(index);
-		
+		_persistent_instances.remove(index);
+				
 		//! Atualiza com novas instancias 
 		_persistent_instances.addAll(_current_instances);
 		
@@ -200,12 +179,20 @@ public class CacheController {
 			writer.write(_persistent_instances.toString());
 			writer.flush();
 			writer.close();
-		} catch (Exception e) {
-			System.out.println("Error on periodic update: " + e.getMessage());
 		}
+		catch (Exception e) {
+			System.out.println("CacheController: Error on periodic update");
+			e.printStackTrace();
+		}
+		
+		_current_instances.clear();
 	}
 	
-	public synchronized void updateControl(SmartData data) { }
+	public void update_control(SmartData data) { }
+	
+	public Instances current_instances() {
+		return _current_instances;
+	}
 	
 	private void reset_parameters() {
 		avg_internal_temps = 0.0;
@@ -219,7 +206,6 @@ public class CacheController {
 	}
 	
 	static int i = 0;
-	
 	private void print_parameters() {
 		System.out.println("Atualização das médias " + i++);
 		System.out.println("avg_internal_temps: " + avg_internal_temps);

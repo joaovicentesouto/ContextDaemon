@@ -7,9 +7,8 @@ import weka.core.Instance;
 
 public class Daemon
 {
-	static private MachineLearning _learning;
-	static private CacheController _cache_controller;
 	static private NamedPipeReader _pipe_reader = null;
+	
 	static private SynchronizedQueue _data_queue = null;
 	static private SynchronizedQueue _control_queue = null;
 	
@@ -48,13 +47,7 @@ public class Daemon
 				System.out.println("Recebimento de dados:");
 				System.out.println("Mensagem: " + message.toString());
 				
-				try {
-					_data_queue.enqueue(message);
-					_cache_controller.updateData(message.getSmartData());
-				}
-				catch (Exception e) {
-					System.out.println("Data cache error: " + e.getMessage());
-				}
+				_data_queue.enqueue(message);
 				
 				break;
 
@@ -62,12 +55,7 @@ public class Daemon
 				System.out.println("Recebimento de commando:");
 				System.out.println("Mensagem: " + message.toString());
 				
-				try {
-					_cache_controller.updateControl(message.getSmartData());
-				}
-				catch (Exception e) {
-					System.out.println("Control cache error: " + e.getMessage());
-				}
+				_control_queue.enqueue(message);
 				
 				break;
 			
@@ -75,10 +63,9 @@ public class Daemon
 				System.out.println("Solicitação de predição:");
 				System.out.println("Mensagem: " + message.toString());
 
-				Instance context = _cache_controller.current_context();
-				_learning.predict(context);
+//				Instance context = _learning.predict(context);
 				
-				System.out.println("Predict: " + context.toString());
+//				System.out.println("Predict: " + context.toString());
 
 				break;
 
@@ -123,17 +110,6 @@ public class Daemon
 		
 		finally {
 		        out.close();
-		}
-		
-		//! Reloading
-		try {
-			_learning = new MachineLearning();
-			_cache_controller = new CacheController(_learning);
-		}
-		
-		catch (Exception e) {
-			e.printStackTrace();
-			throw new Exception("Cannot create learning and cache control objects!");
 		}
 	}
 	
