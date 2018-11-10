@@ -43,6 +43,7 @@ public class ControlRunnable implements Runnable
 			_cache_controller.update_control(message.getSmartData());
 		}
 		
+		exiting();
 		System.out.println(" * Control Thread exiting ...");
 	}
 
@@ -51,5 +52,9 @@ public class ControlRunnable implements Runnable
 		synchronized (this) {
 			stop = true;
 		}
+	}
+	
+	private void exiting() {
+		
 	}
 }

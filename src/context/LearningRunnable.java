@@ -54,9 +54,11 @@ public class LearningRunnable implements Runnable
 			//! é executado o retreinamento da rede neural
 			if(_cache_controller.current_instances().size() >= 1000) {
 				update_model(_cache_controller.current_instances());
+				_cache_controller.persist_instances();
 			}
 		}
 		
+		exiting();
 		System.out.println(" + Learning Thread exiting ...");
 	}
 	
@@ -64,14 +66,11 @@ public class LearningRunnable implements Runnable
 	{
 		//! Atualiza o modelo
 		try {
-			_learning.update(instances);			
+			_learning.update(new Instances(instances));			
 		} catch (Exception e) {
 			System.out.println("LearningRunnable: Error on periodic update");
 			e.printStackTrace();
 		}
-		
-		//! Reset current cache
-		_cache_controller.persist_instances();
 	}
 	
 	public Instance predict()
@@ -94,5 +93,10 @@ public class LearningRunnable implements Runnable
 		synchronized (this) {
 			stop = true;
 		}
+	}
+	
+	private void exiting() {
+		//! Reset current cache
+		_cache_controller.persist_instances();
 	}
 }
