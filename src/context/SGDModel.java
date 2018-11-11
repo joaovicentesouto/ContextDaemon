@@ -11,8 +11,12 @@ import weka.core.SelectedTag;
 
 public class SGDModel implements LearningModel
 {
+//! ================== Attributes ==================
+
 	private SGD _classifier;
 	private boolean trained = false;
+
+//! ================== Constructor ==================
 	
 	public SGDModel() {
 		_classifier = new SGD();
@@ -22,6 +26,8 @@ public class SGDModel implements LearningModel
 		_classifier = new SGD();
 		relearning(data);
 	}
+
+//! ================== Learning Functions ==================
 
 	@Override
 	public void update(Instances data) throws Exception
@@ -86,6 +92,8 @@ public class SGDModel implements LearningModel
 			trained = true;
 		}
 	}
+
+//! ================== Predict Functions ==================
 
 	@Override
 	public void predict(Instance data) throws Exception

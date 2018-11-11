@@ -2,11 +2,15 @@ package context;
 
 public class ControlRunnable implements Runnable
 {
+//! ================== Attributes ==================
+
 	static private LearningModel 	 _learning		   = null;
 	static private CacheController 	 _cache_controller = null;
 	static private SynchronizedQueue _control_queue    = null;
 	
 	private boolean stop = false;
+
+//! ================== Constructor ==================
 
 	public ControlRunnable(CacheController cache_controller, SynchronizedQueue control_queue, LearningModel learning) throws Exception {
 		super();
@@ -15,10 +19,12 @@ public class ControlRunnable implements Runnable
 		_learning = learning;
 	}
 
+//! ================== Main Function ==================
+
 	@Override
 	public void run()
 	{
-		System.out.println(" * Initiating Control Thread ...");
+		setup();
 		
 		while (true)
 		{
@@ -56,17 +62,28 @@ public class ControlRunnable implements Runnable
 		}
 		
 		exiting();
-		System.out.println(" * Control Thread exiting ...");
 	}
+
+//! ================== Init/Finish ==================
+
+	private void setup() {
+		System.out.println(" * Initiating Control Thread ...");
+
+		System.out.println(" * Control Thread running ...");
+	}
+	
+	private void exiting() {
+		System.out.println(" * Control Thread exiting ...");
+
+		System.out.println(" * Control Thread says goodbye ...");
+	}
+
+//! ================== Getters/Setters ==================
 
 	public void shutdown()
 	{
 		synchronized (this) {
 			stop = true;
 		}
-	}
-	
-	private void exiting() {
-		
 	}
 }

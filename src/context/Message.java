@@ -2,7 +2,8 @@ package context;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Message {
+public class Message
+{
 	
 	public enum Type {
 		@SerializedName("0")

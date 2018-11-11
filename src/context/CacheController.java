@@ -13,7 +13,7 @@ import weka.core.DenseInstance;
 
 public class CacheController
 {
-//! ================= ATTRIBUTES =================
+//! ================= Attributes =================
 
 	//! Constantes
 	static long TEMPERATURE = 2224179556L;

@@ -7,8 +7,8 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 
-public class NamedPipeReader {
-	
+public class NamedPipeReader
+{	
 	private BufferedReader _pipe_reader;
 	private String filename;
 	

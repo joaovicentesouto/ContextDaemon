@@ -98,13 +98,13 @@ public class Daemon
 		_data_queue = new SynchronizedQueue();
 		_control_queue = new SynchronizedQueue();
 		
-		//! Configuring
+		//! Configuring (Save the pid in a file)
 		BufferedWriter out = null;
 		long pid = ProcessHandle.current().pid();
 		
 		try {
 			out = new BufferedWriter(new FileWriter(".pid", false));
-		    out.write((int) pid);
+		    out.write(Long.toString(pid));
 		}
 		
 		catch (Exception e) {

@@ -5,7 +5,7 @@ import java.util.Queue;
 
 public class SynchronizedQueue
 {	
-	Queue<Message> _queue = new LinkedList<Message>();
+	private Queue<Message> _queue = new LinkedList<Message>();
 	
 	void enqueue(Message message)
 	{
@@ -21,10 +21,8 @@ public class SynchronizedQueue
 	{
 		synchronized (this)
 		{
-			//! Needs wait?
-            if (_queue.isEmpty()) {
+            if (_queue.isEmpty())
             	wait();
-            }
             	
             return _queue.remove();
 		}

@@ -7,10 +7,14 @@ import weka.classifiers.functions.MultilayerPerceptron;
 import weka.core.Instance;
 import weka.core.Instances;
 
-public class MultilayerModel implements LearningModel {
+public class MultilayerModel implements LearningModel
+{
+//! ================== Attributes ==================
+
+	private MultilayerPerceptron _classifier;
 	
-	MultilayerPerceptron _classifier;
-	
+//! ================== Constructor ==================
+
 	public MultilayerModel() {
 		_classifier = new MultilayerPerceptron();
 	}
@@ -19,6 +23,8 @@ public class MultilayerModel implements LearningModel {
 		_classifier = new MultilayerPerceptron();
 		update(data);
 	}
+
+//! ================== Learning Functions ==================
 
 	@Override
 	public void update(Instances data) throws Exception
@@ -65,6 +71,8 @@ public class MultilayerModel implements LearningModel {
 		//! Precisa aprender do zero se for SGD
 		update(data);
 	}
+
+//! ================== Predict Functions ==================
 
 	@Override
 	public void predict(Instance data) throws Exception

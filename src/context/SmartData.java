@@ -1,7 +1,9 @@
 package context;
 
-public class SmartData {
-	
+public class SmartData
+{
+//! ================== Attributes ==================	
+
 	private String version;
 	private long unit;
 	private double value;
@@ -12,7 +14,9 @@ public class SmartData {
 	private int z;
 	private long t;
 	private long dev;
-	
+
+//! ================== Constructor ==================
+
 	public SmartData(String version, long unit, double value, int x, int y, int z, long t, long error, long confidence, long dev) {
 		super();
 		this.version = version;
@@ -31,6 +35,8 @@ public class SmartData {
 		super();
 		this.value = value;
 	}
+
+//! ================== Getters/Setters ==================
 
 	public String getVersion() {
 		return version;
@@ -111,7 +117,9 @@ public class SmartData {
 	public void setDev(long dev) {
 		this.dev = dev;
 	}
-	
+
+//! ================== Auxiliary ==================
+
 	@Override
 	public String toString() {
 		return "SmartData [unit=" + unit + ", value=" + value + ", x=" + x + ", y=" + y + ", z=" + z + ", t=" + t

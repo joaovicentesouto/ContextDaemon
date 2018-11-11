@@ -7,8 +7,8 @@ import java.io.IOException;
 
 //import com.google.gson.Gson;
 
-public class NamedPipeWriter {
-	
+public class NamedPipeWriter
+{	
 	
 	public NamedPipeWriter(String filename) throws IOException {
 		super();
