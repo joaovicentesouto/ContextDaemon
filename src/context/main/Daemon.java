@@ -5,6 +5,7 @@ import java.io.FileWriter;
 
 import context.cache.CacheController;
 import context.comm.NamedPipeReader;
+import context.comm.NamedPipeWriter;
 import context.component.Message;
 import context.component.SynchronizedQueue;
 import context.runnable.ControlRunnable;
@@ -14,6 +15,7 @@ import weka.core.Instance;
 public class Daemon
 {
 	static private NamedPipeReader   _pipe_reader 	   = null;
+	static private NamedPipeWriter   _pipe_writer 	   = null;
 	static private SynchronizedQueue _data_queue   	   = null;
 	static private SynchronizedQueue _control_queue    = null;
 	static private CacheController   _cache_controller = null;
@@ -38,6 +40,11 @@ public class Daemon
 			
 			//! Blocking receive
 			Message message = _pipe_reader.receive();
+			
+//			if (message == null) {
+//				System.out.println("DEU RUIM Mensagem nula");
+//				continue;
+//			}
 			
 			switch (message.getType())
 			{
@@ -78,6 +85,9 @@ public class Daemon
 				Instance context = _learning.predict();
 				System.out.println("Ideal temperature: " + context.value(context.numAttributes()-1));
 
+				//! Need send a complex json
+				_pipe_writer.send("{ \"temp_ideal\" : " + context.value(context.numAttributes()-1) + " }");
+
 				break;
 
 			default:
@@ -93,7 +103,8 @@ public class Daemon
 	{
 		//! Initiating
 		try {
-			_pipe_reader = new NamedPipeReader("myfifo");
+			_pipe_reader = new NamedPipeReader(".input");
+			_pipe_writer = new NamedPipeWriter(".output");
 		}
 		
 		catch (Exception e) {
@@ -137,11 +148,9 @@ public class Daemon
 	}
 	
 	static void shutdown() throws Exception
-	{
-		if (_pipe_reader != null)
-			_pipe_reader.close();
-		
+	{	
 		_pipe_reader = null;
+		_pipe_writer = null;
 		
 		_learning.shutdown();
 		_controlling.shutdown();

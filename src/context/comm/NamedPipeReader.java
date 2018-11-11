@@ -37,8 +37,4 @@ public class NamedPipeReader
 		
 		return gson.fromJson(msg, Message.class);
 	}
-	
-	public void close() throws Exception {
-		_pipe_reader.close();
-	}
 }

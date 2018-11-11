@@ -1,0 +1,5 @@
+For use with cat => cat smartdata > .input
+{ "type" : 3, "smartdata" : { "version" : "1.7", "unit" : 2224179500, "value" : 23, "error" : 0, "confidence" : 3, "x" : 302, "y" : 302, "z" : 0, "t" : 1741568216256, "dev" : 0 } }
+
+For use with python3 => python3 script ...
+"{ \"type\" : 3, \"smartdata\" : { \"version\" : \"1.7\", \"unit\" : 2224179500, \"value\" : 23, \"error\" : 0, \"confidence\" : 3, \"x\" : 302, \"y\" : 302, \"z\" : 0, \"t\" : 1741568216256, \"dev\" : 0 } }"

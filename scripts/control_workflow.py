@@ -9,11 +9,9 @@ if len(sys.argv) != 2:
 
 smartdata = json.loads(sys.argv[1]) # maybe sys.argv[1]['smartdata']
 message = {
-    'type': 3,
+    'type': 4,
     'smartdata' : smartdata
 }
-
-print(json.dumps(message))
 
 with open('../.input', 'w') as fifo:
     fifo.write(json.dumps(message))
