@@ -1,4 +1,7 @@
-import subprocess
+import os, subprocess, sys, time
+
+command = "java -jar jar/daemon.jar > log/results.log"
+working_directory = ".."
 
 def process_is_alive():
     try:
@@ -12,10 +15,15 @@ def process_is_alive():
     
     print(pid)
 
-    if alive:
-        print("IT'S ALIVE!!!")
-    else:
-        print("OH NO!!!")
+    if not alive:
+        if os.fork() == 0:
+            os.chdir(working_directory)
+            subprocess.Popen(command
+                , shell=True
+                , stdout=subprocess.PIPE
+                , stderr=subprocess.PIPE
+                , stdin=subprocess.PIPE
+            )
 
 #Source: https://stackoverflow.com/questions/38056/how-do-you-check-in-linux-with-python-if-a-process-is-still-running
 #proc    -> name/id of the process
