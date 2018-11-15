@@ -2,6 +2,7 @@ package context.main;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.lang.management.ManagementFactory;
 
 import context.cache.CacheController;
 import context.comm.NamedPipeReader;
@@ -40,11 +41,6 @@ public class Daemon
 			
 			//! Blocking receive
 			Message message = _pipe_reader.receive();
-			
-//			if (message == null) {
-//				System.out.println("DEU RUIM Mensagem nula");
-//				continue;
-//			}
 			
 			switch (message.getType())
 			{
@@ -117,11 +113,12 @@ public class Daemon
 		
 		//! Configuring (Save the pid in a file)
 		BufferedWriter out = null;
-		long pid = ProcessHandle.current().pid();
+		long pid = ManagementFactory.getRuntimeMXBean().getPid();
 		
 		try {
-			out = new BufferedWriter(new FileWriter(".pid", false));
+			out = new BufferedWriter(new FileWriter(".pid"));
 		    out.write(Long.toString(pid));
+			out.flush();
 		}
 		
 		catch (Exception e) {

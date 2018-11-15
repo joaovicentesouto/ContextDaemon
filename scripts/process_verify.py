@@ -9,6 +9,8 @@ def process_is_alive():
         alive = process_exists(pid)
     except IOError:
         alive = False
+    
+    print(pid)
 
     if alive:
         print("IT'S ALIVE!!!")
