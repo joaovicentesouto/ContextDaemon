@@ -30,33 +30,31 @@ public class SGDModel implements LearningModel
 //! ================== Learning Functions ==================
 
 	@Override
-	public void update(Instances data) throws Exception
-	{
+	public void update(Instances data) throws Exception {
 		if (!trained) {
 			relearning(data);
 			return;
 		}
-
-		SGD temp;
-		
-		synchronized (this) {
-			temp = (SGD) SGD.makeCopy(_classifier);
-		}
 		
 		for (Instance i : data) {
 			synchronized (this) {
-				((UpdateableClassifier)temp).updateClassifier(i);
+				((UpdateableClassifier)_classifier).updateClassifier(i);
 			}
 		}
-		
+	}
+	
+	@Override
+	public void update(Instance data) throws Exception {
+		if (!trained)
+			return;
+
 		synchronized (this) {
-			_classifier = temp;
+			((UpdateableClassifier)_classifier).updateClassifier(data);
 		}
 	}
 
 	@Override
-	public void relearning(Instances data) throws Exception
-	{	
+	public void relearning(Instances data) throws Exception {	
 		SGD temp;
 		
 		synchronized (this) {
@@ -96,8 +94,7 @@ public class SGDModel implements LearningModel
 //! ================== Predict Functions ==================
 
 	@Override
-	public void predict(Instance data) throws Exception
-	{
+	public void predict(Instance data) throws Exception {
 		if (trained) {	
 			synchronized (this) {
 				_classifier.classifyInstance(data);

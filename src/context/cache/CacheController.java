@@ -47,6 +47,7 @@ public class CacheController
 	//! Current user command
 	private Double _current_ideal_temperature = 0.0;
 	private long   _last_command_time 		  = 0L;
+	private boolean _user_mode = false;
 
 	//! Responsável pela armazenamento do timestamp
 	private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
@@ -66,8 +67,7 @@ public class CacheController
 		reset_parameters();
 	}
 
-	private void reload_backup() throws Exception
-	{	
+	private void reload_backup() throws Exception {	
 		//! Carrega instancias persistentes
 		DataSource source;
 		Instances cache;
@@ -116,8 +116,7 @@ public class CacheController
 
 //! ================= Data =================
 
-	public void update_data(SmartData data)
-	{
+	public void update_data(SmartData data) {
 		//! Cria uma instancia que representa um intervalo de 30s
 		if ((_calendar.getTimeInMillis() - data.getT())/1000L > 30)
 			create_context(data);
@@ -152,15 +151,14 @@ public class CacheController
 			break;
 
 		default:
-			System.err.println("Este dispositivo não deveria estar sendo monitorado!");
+			System.err.println("The device do not exists!");
 			break;
 		}
 
 		print_parameters();
 	}
 
-	private void create_context(SmartData data)
-	{
+	private void create_context(SmartData data) {
 		if (_n_in_temp == 0 || _n_in_hum == 0 || _n_out_temp == 0 || _n_out_hum == 0) {
 			System.err.println("CacheController: Cannot create the context instance!");
 			return;
@@ -195,18 +193,8 @@ public class CacheController
 //! ================= Control =================
 
 	public synchronized void update_control(SmartData data, boolean from_user) {
-		if (from_user) {
-			//! Precisa modificar alguns valores?
-			//! Tipo, todas as horas iguais a esse data tem a mesma temperatura!
-			
-			for (Instance i : _persistent_instances) {
-				if (i.value(0) == 0.0) {
-					
-				}
-			}
-		}
-		
 		synchronized (_current_ideal_temperature) {
+			_user_mode = from_user;
 			_current_ideal_temperature = data.getValue();
 			_last_command_time = _calendar.getTimeInMillis();
 		}
@@ -215,6 +203,12 @@ public class CacheController
 //! ================= Getters =================
 
 	public Instance current_context() {
+		//! Se estiver em mode usuário (usuario mudou recentemente a temp) entao contexto tem a temp ideal dele.
+		synchronized (_current_ideal_temperature) {
+			if (_user_mode)
+				_current_context.setValue(_current_context.numAttributes()-1, _current_ideal_temperature);
+		}
+		
 		return _current_context;
 	}
 
@@ -234,10 +228,13 @@ public class CacheController
 		return _last_command_time;
 	}
 
+	public Boolean user_mode() {
+		return _user_mode;
+	}
+	
 //! ================= Persistent Cache (Disk) =================
 
-	public void persist_instances()
-	{
+	public void persist_instances() {
 		//! Elimina as instâncias mais antigas.
 		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia
 		int limit = _persistent_instances.size() - 2280;

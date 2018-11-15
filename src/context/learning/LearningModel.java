@@ -7,8 +7,10 @@ public interface LearningModel {
 	
 	public void update(Instances data) throws Exception;
 	
-	public void relearning(Instances data) throws Exception;
+	public void update(Instance data) throws Exception;
 	
+	public void relearning(Instances data) throws Exception;
+
 	public void predict(Instance data) throws Exception;
 
 }

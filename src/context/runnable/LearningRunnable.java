@@ -14,38 +14,32 @@ public class LearningRunnable implements Runnable
 {
 //! ================== Attributes ==================
 	
-	static private LearningModel     _learning;
-	static private CacheController 	 _cache_controller;
-	static private SynchronizedQueue _data_queue;
-	private boolean stop = false;
+	private static LearningModel     _learning;
+	private static CacheController 	 _cache_controller;
+	private static SynchronizedQueue _data_queue;
+	private boolean _stop = false;
 
-	static private Thread _worker = null;
-	static private Thread _watchmaker = null;
+	private static Thread _worker = null;
+	private static Thread _watchmaker = null;
 	
 //! ================== Constructor ==================
 
-	public LearningRunnable(CacheController cache_controller, SynchronizedQueue data_queue) {
+	public LearningRunnable(CacheController cache_controller, SynchronizedQueue data_queue) throws Exception {
 		super();
 
 		_data_queue = data_queue;
 		_cache_controller = cache_controller;
 		
-		try {
-			_learning = new SGDModel(_cache_controller.persistente_instances());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		_learning = new SGDModel(_cache_controller.persistente_instances());
 	}
 	
 //! ================== Main Function ==================
 
 	@Override
-	public void run()
-	{		
+	public void run() {		
 		setup();
 
-		while (!stop)
+		while (!_stop)
 		{
 			//! Bloqueia se não tiver mensagens para processar
 			Message message;
@@ -60,15 +54,15 @@ public class LearningRunnable implements Runnable
 
 			//! Shutdown?
 			synchronized (this) {
-				if (stop)
+				if (_stop)
 					break;
 			}
 
 			_cache_controller.update_data(message.getSmartData());
 
-			//! Caso o tamanho da cache atinga 1000 instâncias,
+			//! Caso o tamanho da cache atinga 100 instâncias,
 			//! é executado o retreinamento da rede neural
-			if(_cache_controller.current_size() >= 1000) {
+			if(_cache_controller.current_size() >= 100) {
 				update_model(_cache_controller.current_instances());
 				_cache_controller.persist_instances();
 			}
@@ -79,8 +73,7 @@ public class LearningRunnable implements Runnable
 	
 //! ================== Learning Functions ==================
 
-	private void update_model(Instances instances)
-	{
+	private void update_model(Instances instances) {
 		if (_worker != null) {
 			try {
 				_worker.join();
@@ -108,14 +101,16 @@ public class LearningRunnable implements Runnable
 		_worker.start();
 	}
 
-	public Instance predict()
-	{
+	public Instance predict() {
 		Instance context = _cache_controller.current_context();
+		
+		if (_cache_controller.user_mode())
+			return context;
 
 		try {
 			_learning.predict(context);
 		}
-		catch (Exception e) {
+		catch (Exception e) {               
 			System.out.println("LearningRunnable: Error on predict");
 			e.printStackTrace();
 			
@@ -127,18 +122,17 @@ public class LearningRunnable implements Runnable
 
 //! ================== Init/Finish ==================
 		
-	private void setup()
-	{
+	private void setup() {
 		System.out.println(" + Initiating Learning Thread ...");
 		
 		// ! Update model
 		update_model(_cache_controller.persistente_instances());
-
+		
 		_watchmaker = new Thread() {
 			private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 
 			public void run() {
-				while (!stop) {
+				while (!_stop) {
 					try {
 						Thread.sleep(30000); // ! 30 segundos
 
@@ -160,8 +154,7 @@ public class LearningRunnable implements Runnable
 		System.out.println(" + Learning Thread running ...");
 	}
 
-	private void exiting()
-	{
+	private void exiting() {
 		System.out.println(" + Learning Thread exiting ...");
 		
 		//! Reset current cache
@@ -186,10 +179,9 @@ public class LearningRunnable implements Runnable
 		return _learning;
 	}
 	
-	public void shutdown()
-	{
+	public void shutdown() {
 		synchronized (this) {
-			stop = true;
+			_stop = true;
 		}
 	}
 }

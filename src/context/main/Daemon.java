@@ -27,8 +27,7 @@ public class Daemon
 	static private Thread _learning_thread = null;
 	static private Thread _control_thread  = null;
 	
-	public static void main(String[] args) throws Exception
-	{
+	public static void main(String[] args) throws Exception {
 		System.out.println("Initiating Daemon ...");
 
 		setup();

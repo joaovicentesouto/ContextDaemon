@@ -27,8 +27,7 @@ public class MultilayerModel implements LearningModel
 //! ================== Learning Functions ==================
 
 	@Override
-	public void update(Instances data) throws Exception
-	{
+	public void update(Instances data) throws Exception {
 		MultilayerPerceptron temp;
 		
 		synchronized (this) {
@@ -66,8 +65,7 @@ public class MultilayerModel implements LearningModel
 	}
 
 	@Override
-	public void relearning(Instances data) throws Exception
-	{
+	public void relearning(Instances data) throws Exception {
 		//! Precisa aprender do zero se for SGD
 		update(data);
 	}
@@ -75,12 +73,17 @@ public class MultilayerModel implements LearningModel
 //! ================== Predict Functions ==================
 
 	@Override
-	public void predict(Instance data) throws Exception
-	{
+	public void predict(Instance data) throws Exception {
 		synchronized (this) {
 			//! Atualiza a própria instância (Verificar)
 			_classifier.classifyInstance(data);
 		}
+	}
+
+	@Override
+	public void update(Instance data) throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
