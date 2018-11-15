@@ -83,10 +83,21 @@ public class Daemon
 				System.out.println("Mensagem: " + message.toString());
 
 				Instance context = _learning.predict();
-				System.out.println("Ideal temperature: " + context.value(context.numAttributes()-1));
+				System.out.println("Temperatura ideal: " + context.value(context.numAttributes()-1));
 
 				//! Need send a complex json
 				_pipe_writer.send("{ \"temp_ideal\" : " + context.value(context.numAttributes()-1) + " }");
+
+				break;
+			
+			case DISCOVERED:
+				System.out.println("Usuário localizado:");
+				System.out.println(message.toString());
+
+				Instance context = _learning.predict();
+				System.out.println("Temperatura ideal: " + context.value(context.numAttributes()-1));
+
+				//! Need to inform that the data need to be stored !\\
 
 				break;
 
@@ -130,7 +141,7 @@ public class Daemon
 		}
 		
 		finally {
-		        out.close();
+		    out.close();
 		}
 		
 		//! Reaload

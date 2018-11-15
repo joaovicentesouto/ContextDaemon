@@ -240,9 +240,9 @@ public class CacheController
 	{
 		//! Elimina as instâncias mais antigas.
 		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia
-		int limit = _persistent_instances.size() - 2280;
-		for (int index = 0; index < limit; index++)
-			_persistent_instances.remove(index);
+		int limit = 2280 - _persistent_instances.size() - _current_instances.size();
+		for (int index = limit, int i = 0; index < 0; index++, i++)
+			_persistent_instances.remove(i);
 
 		//! Atualiza com novas instancias 
 		_persistent_instances.addAll(_current_instances);
