@@ -70,10 +70,10 @@ public class LearningRunnable implements Runnable
 			}
 
 			_cache_controller.update_data(message.getSmartData());
-
-			//! Caso o tamanho da cache atinga 100 instâncias,
+			
+			//! Caso o tamanho da cache atinga 60 instâncias (30 min de instancias),
 			//! é executado o retreinamento da rede neural
-			if(_cache_controller.current_size() >= 100) {
+			if(_cache_controller.current_size() >= 60) {
 				update_model(_cache_controller.current_instances());
 				_cache_controller.persist_instances();
 			}

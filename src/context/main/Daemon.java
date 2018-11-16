@@ -18,9 +18,9 @@ public class Daemon
 {
 
 	public enum State {
-		STOPPED (0),
+		STOPPED   (0),
 		ACTIVATED (1),
-		IDLE (2);
+		IDLE 	  (2);
 		
 		private final int value;
 		
