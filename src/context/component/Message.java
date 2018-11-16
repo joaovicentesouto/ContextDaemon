@@ -22,7 +22,10 @@ public class Message
 		COMMAND (4),
 		
 		@SerializedName("5")
-		PREDICT (5);
+		PREDICT (5),
+		
+		@SerializedName("6")
+		DISCOVERED (6);
 		
 		private final int value;
 		

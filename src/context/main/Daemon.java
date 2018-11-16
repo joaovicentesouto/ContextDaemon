@@ -16,6 +16,30 @@ import weka.core.Instance;
 
 public class Daemon
 {
+
+	public enum State {
+		@SerializedName("0")
+		STOPPED (0),
+		
+		@SerializedName("1")
+		ACTIVATED (1),
+		
+		@SerializedName("2")
+		IDLE (2);
+		
+		private final int value;
+		
+	    public int getValue() {
+	        return value;
+	    }
+
+	    private State(int value) {
+	        this.value = value;
+	    }
+	}
+
+	static private State _state = STOPPED;
+
 	static private NamedPipeReader   _pipe_reader 	   = null;
 	static private NamedPipeWriter   _pipe_writer 	   = null;
 	static private SynchronizedQueue _data_queue   	   = null;
@@ -70,7 +94,10 @@ public class Daemon
 				System.out.println("Recebimento de dados:");
 				System.out.println("Mensagem: " + message.toString());
 				
-				_data_queue.enqueue(message);
+				if (_state == ACTIVATED)
+					_data_queue.enqueue(message);
+				else
+					System.out.println("User not detected. Nothing to do.");
 				
 				break;
 
@@ -78,7 +105,10 @@ public class Daemon
 				System.out.println("Recebimento de commando:");
 				System.out.println("Mensagem: " + message.toString());
 				
-				_control_queue.enqueue(message);
+				if (_state == ACTIVATED)
+					_control_queue.enqueue(message);
+				else
+					System.out.println("User not detected. Nothing to do.");
 				
 				break;
 			
@@ -86,11 +116,29 @@ public class Daemon
 				System.out.println("Solicitação de predição:");
 				System.out.println("Mensagem: " + message.toString());
 
-				Instance context = _learning.predict();
-				System.out.println("Ideal temperature: " + context.value(context.numAttributes()-1));
 
-				//! Need send a complex json
-				_pipe_writer.send("{ \"temp_ideal\" : " + context.value(context.numAttributes()-1) + " }");
+				if (_state == ACTIVATED) {
+
+					Instance context = _learning.predict();
+					System.out.println("Temperatura ideal: " + context.value(context.numAttributes()-1));
+
+					//! Need send a complex json
+					_pipe_writer.send("{ \"temp_ideal\" : " + context.value(context.numAttributes()-1) + " }");
+
+				} else {
+					System.out.println("User not detected. Nothing to do.");					
+				}
+
+				break;
+			
+			case DISCOVERED:
+				System.out.println("Usuário localizado:");
+				System.out.println(message.toString());
+
+				Instance context = _learning.predict();
+				System.out.println("Temperatura ideal: " + context.value(context.numAttributes()-1));
+
+				_state = ACTIVATED;
 
 				break;
 
@@ -143,7 +191,7 @@ public class Daemon
 		}
 		
 		finally {
-		        out.close();
+		    out.close();
 		}
 		
 		//! Reaload
@@ -158,10 +206,14 @@ public class Daemon
 		
 		_learning_thread.start();
 		_control_thread.start();
+
+		_state = IDLE;
 	}
 	
 	static void shutdown() throws Exception
 	{	
+		_state = STOPPED;
+
 		_pipe_reader = null;
 		_pipe_writer = null;
 		
