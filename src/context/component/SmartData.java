@@ -14,10 +14,11 @@ public class SmartData
 	private int z;
 	private long t;
 	private long dev;
+	private String mac;
 
 //! ================== Constructor ==================
 
-	public SmartData(String version, long unit, double value, int x, int y, int z, long t, long error, long confidence, long dev) {
+	public SmartData(String version, long unit, double value, int x, int y, int z, long t, long error, long confidence, long dev, String mac) {
 		super();
 		this.version = version;
 		this.unit = unit;
@@ -29,6 +30,7 @@ public class SmartData
 		this.error = error;
 		this.confidence = confidence;
 		this.dev = dev;
+		this.mac = mac;
 	}
 	
 	public SmartData(double value) {
@@ -117,12 +119,20 @@ public class SmartData
 	public void setDev(long dev) {
 		this.dev = dev;
 	}
+	
+	public String getMac() {
+		return mac;
+	}
+
+	public void setMac(String mac) {
+		this.mac = mac;
+	}
 
 //! ================== Auxiliary ==================
 
 	@Override
 	public String toString() {
 		return "SmartData [unit=" + unit + ", value=" + value + ", x=" + x + ", y=" + y + ", z=" + z + ", t=" + t
-				+ ", error=" + error + ", confidence=" + confidence + ", dev=" + dev + "]";
+				+ ", error=" + error + ", confidence=" + confidence + ", dev=" + dev + "mac=" + mac + "]";
 	}
 }

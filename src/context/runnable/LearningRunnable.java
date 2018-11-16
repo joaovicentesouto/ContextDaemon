@@ -1,15 +1,12 @@
 package context.runnable;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Calendar;
 import java.util.TimeZone;
 
 import context.cache.CacheController;
 import context.learning.LearningModel;
 import context.learning.SGDModel;
+import context.statistics.Timer;
 import context.component.*;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -27,7 +24,7 @@ public class LearningRunnable implements Runnable
 	private static Thread _watchmaker = null;
 
 	//! Measure performance file
-	static private BufferedWriter _performance = null;
+	private Timer _stats = null;
 	
 //! ================== Constructor ==================
 
@@ -39,7 +36,7 @@ public class LearningRunnable implements Runnable
 		
 		_learning = new SGDModel(_cache_controller.persistente_instances());
 		
-		_performance = new BufferedWriter(new FileWriter(new File("./measurements/learning.log")));
+		_stats = new Timer("./measurements/learning.log", 100000);
 	}
 	
 //! ================== Main Function ==================
@@ -47,8 +44,6 @@ public class LearningRunnable implements Runnable
 	@Override
 	public void run() {		
 		setup();
-		
-		long t1, t2;
 
 		while (!_stop)
 		{
@@ -59,7 +54,7 @@ public class LearningRunnable implements Runnable
 				message = _data_queue.dequeue();
 				
 				//! Start measurements
-				t1 = System.nanoTime();
+				_stats.start();
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -69,15 +64,7 @@ public class LearningRunnable implements Runnable
 			//! Shutdown?
 			synchronized (this) {
 				if (_stop) {
-					//! End measurements
-					try {
-						t2 = System.nanoTime();
-						_performance.write(Long.toString(t2 - t1) + "\n");
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					
+					_stats.end();
 					break;
 				}
 			}
@@ -92,14 +79,7 @@ public class LearningRunnable implements Runnable
 			}
 			
 			//! End measurements
-			try {
-				t2 = System.nanoTime();
-				_performance.write(Long.toString(t2 - t1) + "\n");
-				_performance.flush();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			_stats.end();
 		}
 		
 		exiting();

@@ -1,7 +1,6 @@
 package context.main;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.lang.management.ManagementFactory;
 
@@ -12,19 +11,15 @@ import context.component.Message;
 import context.component.SynchronizedQueue;
 import context.runnable.ControlRunnable;
 import context.runnable.LearningRunnable;
+import context.statistics.Timer;
 import weka.core.Instance;
 
 public class Daemon
 {
 
 	public enum State {
-		@SerializedName("0")
 		STOPPED (0),
-		
-		@SerializedName("1")
 		ACTIVATED (1),
-		
-		@SerializedName("2")
 		IDLE (2);
 		
 		private final int value;
@@ -38,7 +33,7 @@ public class Daemon
 	    }
 	}
 
-	static private State _state = STOPPED;
+	static private State _state = State.STOPPED;
 
 	static private NamedPipeReader   _pipe_reader 	   = null;
 	static private NamedPipeWriter   _pipe_writer 	   = null;
@@ -46,14 +41,13 @@ public class Daemon
 	static private SynchronizedQueue _control_queue    = null;
 	static private CacheController   _cache_controller = null;
 	
-	static private LearningRunnable  _learning = null;
-	static private ControlRunnable   _controlling  = null;
-	
-	static private Thread _learning_thread = null;
-	static private Thread _control_thread  = null;
+	static private LearningRunnable  _learning 		   = null;
+	static private ControlRunnable   _controlling  	   = null;
+	static private Thread 			 _learning_thread  = null;
+	static private Thread 			 _control_thread   = null;
 	
 	//! Measure performance file
-	static private BufferedWriter _performance = null;
+	static private Timer _stats = null;
 	
 	public static void main(String[] args) throws Exception {
 		System.out.println("Initiating Daemon ...");
@@ -62,8 +56,6 @@ public class Daemon
 		
 		System.out.println("Services executing ...");
 		
-		long t1, t2;
-		
 		while (_pipe_reader != null)
 		{
 			System.out.println("Waiting requisitions ...");
@@ -71,8 +63,16 @@ public class Daemon
 			//! Blocking receive
 			Message message = _pipe_reader.receive();
 			
+
+			if (_state != State.ACTIVATED && message.getSmartData().getMac() == null) {
+				System.out.println("User not detected. Nothing to do.");
+				continue;
+			}
+			
+//			|| (_state == State.IDLE && message.getType() != Message.Type.PREDICT) isso da problema eu acho porque o pipe vai ficar esperando a resposta
+			
 			//! Start measurements
-			t1 = System.nanoTime();
+			_stats.start();
 			
 			switch (message.getType())
 			{
@@ -94,10 +94,7 @@ public class Daemon
 				System.out.println("Recebimento de dados:");
 				System.out.println("Mensagem: " + message.toString());
 				
-				if (_state == ACTIVATED)
-					_data_queue.enqueue(message);
-				else
-					System.out.println("User not detected. Nothing to do.");
+				_data_queue.enqueue(message);
 				
 				break;
 
@@ -105,10 +102,7 @@ public class Daemon
 				System.out.println("Recebimento de commando:");
 				System.out.println("Mensagem: " + message.toString());
 				
-				if (_state == ACTIVATED)
-					_control_queue.enqueue(message);
-				else
-					System.out.println("User not detected. Nothing to do.");
+				_control_queue.enqueue(message);
 				
 				break;
 			
@@ -117,28 +111,29 @@ public class Daemon
 				System.out.println("Mensagem: " + message.toString());
 
 
-				if (_state == ACTIVATED) {
+				Instance predict_context = _learning.predict();
+				System.out.println("Temperatura ideal: " + predict_context.value(predict_context.numAttributes()-1));
 
-					Instance context = _learning.predict();
-					System.out.println("Temperatura ideal: " + context.value(context.numAttributes()-1));
-
-					//! Need send a complex json
-					_pipe_writer.send("{ \"temp_ideal\" : " + context.value(context.numAttributes()-1) + " }");
-
-				} else {
-					System.out.println("User not detected. Nothing to do.");					
-				}
+				//! Need send a complex json
+				_pipe_writer.send("{ \"temp_ideal\" : " + predict_context.value(predict_context.numAttributes()-1) + " }");
 
 				break;
 			
 			case DISCOVERED:
 				System.out.println("Usuário localizado:");
 				System.out.println(message.toString());
-
-				Instance context = _learning.predict();
-				System.out.println("Temperatura ideal: " + context.value(context.numAttributes()-1));
-
-				_state = ACTIVATED;
+				
+				//! User detect
+				if (_state != State.ACTIVATED) {
+					Instance disc_context = _learning.predict();
+					System.out.println("Temperatura ideal: " + disc_context.value(disc_context.numAttributes()-1));
+					
+					_state = State.ACTIVATED;
+				}
+				
+				//! User left
+				else
+					_state = State.IDLE;			
 
 				break;
 
@@ -148,9 +143,7 @@ public class Daemon
 			}
 			
 			//! End measurements
-			t2 = System.nanoTime();
-			_performance.write(Long.toString(t2 - t1) + "\n");
-			_performance.flush();
+			_stats.end();
 		}
 		
 		System.out.println("Daemon exiting ...");
@@ -164,7 +157,7 @@ public class Daemon
 			_pipe_writer = new NamedPipeWriter(".output");
 			
 			//! Performance
-			_performance = new BufferedWriter(new FileWriter(new File("./measurements/daemon.log")));
+			_stats = new Timer("./measurements/daemon.log", 100000);
 		}
 		
 		catch (Exception e) {
@@ -207,12 +200,12 @@ public class Daemon
 		_learning_thread.start();
 		_control_thread.start();
 
-		_state = IDLE;
+		_state = State.IDLE;
 	}
 	
 	static void shutdown() throws Exception
 	{	
-		_state = STOPPED;
+		_state = State.STOPPED;
 
 		_pipe_reader = null;
 		_pipe_writer = null;
