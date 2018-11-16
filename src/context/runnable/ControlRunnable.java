@@ -1,5 +1,10 @@
 package context.runnable;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import context.cache.CacheController;
 import context.learning.LearningModel;
 import context.component.SynchronizedQueue;
@@ -12,8 +17,11 @@ public class ControlRunnable implements Runnable
 	static private LearningModel 	 _learning		   = null;
 	static private CacheController 	 _cache_controller = null;
 	static private SynchronizedQueue _control_queue    = null;
-	
 	private boolean stop = false;
+	
+
+	//! Measure performance file
+	static private BufferedWriter _performance = null;
 
 //! ================== Constructor ==================
 
@@ -22,6 +30,9 @@ public class ControlRunnable implements Runnable
 		_cache_controller = cache_controller;
 		_control_queue = control_queue;
 		_learning = learning;
+		
+		//! Performance
+		_performance = new BufferedWriter(new FileWriter(new File("./measurements/controller.log")));
 	}
 
 //! ================== Main Function ==================
@@ -31,39 +42,62 @@ public class ControlRunnable implements Runnable
 	{
 		setup();
 		
-		while (true)
+		long t1, t2;
+		
+		while (!stop)
 		{
 			//! Bloqueia se não tiver mensagens para processar
 			Message message;
 
 			try {
 				message = _control_queue.dequeue();
+				
+				//! Start measurements
+
+				t1 = System.nanoTime();
 			}
 			catch (Exception e) {
-				if (stop) //! Shutdown?
-					break;
-
 				e.printStackTrace();
 				continue;
 			}
 
 			//! Shutdown?
 			synchronized (this) {
-				if (stop)
+				if (stop) {
+					//! Start measurements
+					try {
+						t2 = System.nanoTime();
+						_performance.write(Long.toString(t2 -t1) + "\n");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 					break;
+				}
 			}
 
 			_cache_controller.update_control(message.getSmartData(), true);
 			
-			//! Se mandou comando é porque modelo errou!
+			//! Nao precisa por enquanto (30 min de user mode)
+//			//! Se mandou comando é porque modelo errou!
+//			try {
+//				_learning.relearning(_cache_controller.persistente_instances());
+//			}
+//			catch (Exception e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+			
+			//! End measurements
 			try {
-				_learning.relearning(_cache_controller.persistente_instances());
-			}
-			catch (Exception e) {
+				t2 = System.nanoTime();
+				_performance.write(Long.toString(t2 - t1) + "\n");
+				_performance.flush();
+			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
 		}
 		
 		exiting();

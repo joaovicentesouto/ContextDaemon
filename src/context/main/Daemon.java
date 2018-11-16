@@ -1,6 +1,7 @@
 package context.main;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.lang.management.ManagementFactory;
 
@@ -27,6 +28,9 @@ public class Daemon
 	static private Thread _learning_thread = null;
 	static private Thread _control_thread  = null;
 	
+	//! Measure performance file
+	static private BufferedWriter _performance = null;
+	
 	public static void main(String[] args) throws Exception {
 		System.out.println("Initiating Daemon ...");
 
@@ -34,12 +38,17 @@ public class Daemon
 		
 		System.out.println("Services executing ...");
 		
+		long t1, t2;
+		
 		while (_pipe_reader != null)
 		{
 			System.out.println("Waiting requisitions ...");
 			
 			//! Blocking receive
 			Message message = _pipe_reader.receive();
+			
+			//! Start measurements
+			t1 = System.nanoTime();
 			
 			switch (message.getType())
 			{
@@ -89,6 +98,11 @@ public class Daemon
 				System.out.println("Error on parsing the message!");
 				break;
 			}
+			
+			//! End measurements
+			t2 = System.nanoTime();
+			_performance.write(Long.toString(t2 - t1) + "\n");
+			_performance.flush();
 		}
 		
 		System.out.println("Daemon exiting ...");
@@ -100,6 +114,9 @@ public class Daemon
 		try {
 			_pipe_reader = new NamedPipeReader(".input");
 			_pipe_writer = new NamedPipeWriter(".output");
+			
+			//! Performance
+			_performance = new BufferedWriter(new FileWriter(new File("./measurements/daemon.log")));
 		}
 		
 		catch (Exception e) {
