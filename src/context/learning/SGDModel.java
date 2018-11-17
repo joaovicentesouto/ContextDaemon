@@ -97,7 +97,8 @@ public class SGDModel implements LearningModel
 	public void predict(Instance data) throws Exception {
 		if (trained) {	
 			synchronized (this) {
-				_classifier.classifyInstance(data);
+				double pred = _classifier.classifyInstance(data);
+				data.setValue(data.numAttributes()-1, pred);
 			}
 		}
 	}

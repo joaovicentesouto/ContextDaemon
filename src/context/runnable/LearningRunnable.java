@@ -100,8 +100,7 @@ public class LearningRunnable implements Runnable
 		//! Not necessary wait for model update
 		_worker = new Thread()
 		{
-			public void run()
-			{
+			public void run() {
 				try {
 					_learning.update(instances);
 				}
@@ -143,15 +142,13 @@ public class LearningRunnable implements Runnable
 		update_model(_cache_controller.persistente_instances());
 		
 		_watchmaker = new Thread() {
-			private Calendar _calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-
 			public void run() {
 				while (!_stop) {
 					try {
-						Thread.sleep(30000); // ! 30 segundos
+						Thread.sleep(30000); // ! 30 segundos (melhoria fazendo dormir o que for preciso até 30min)
 
-						// ! 30 minutos desde o último controle?
-						if (_calendar.getTimeInMillis() - _cache_controller.last_command_time() > 1.8e+6) {
+						// ! 30 minutos desde o último controle 
+						if ((System.currentTimeMillis() - _cache_controller.last_command_time())/1000L > 1800) {
 							Instance c = predict();
 							SmartData command = new SmartData(c.value(c.numAttributes() - 1));
 							_cache_controller.update_control(command, false);

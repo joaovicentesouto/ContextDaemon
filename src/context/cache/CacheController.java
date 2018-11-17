@@ -63,7 +63,7 @@ public class CacheController
 		} catch (Exception e) {
 			throw new Exception("CacheController: error on contructor!");
 		}
-
+		
 		reset_parameters();
 	}
 
@@ -118,7 +118,7 @@ public class CacheController
 
 	public void update_data(SmartData data) {
 		//! Cria uma instancia que representa um intervalo de 30s
-		if ((_calendar.getTimeInMillis() - data.getT())/1000L > 30)
+		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
 			create_context(data);
 
 		switch (data.getX())
@@ -155,7 +155,7 @@ public class CacheController
 			break;
 		}
 
-		print_parameters();
+//		print_parameters();
 	}
 
 	private void create_context(SmartData data) {
@@ -163,8 +163,9 @@ public class CacheController
 			System.err.println("CacheController: Cannot create the context instance!");
 			return;
 		}
-
+		
 		Instance instance = new DenseInstance(_persistent_instances.numAttributes());
+		instance.setDataset(_persistent_instances);
 
 		instance.setValue(0, _avg_internal_temps);
 		instance.setValue(1, _avg_external_temps);
@@ -196,7 +197,7 @@ public class CacheController
 		synchronized (_current_ideal_temperature) {
 			_user_mode = from_user;
 			_current_ideal_temperature = data.getValue();
-			_last_command_time = _calendar.getTimeInMillis();
+			_last_command_time = System.currentTimeMillis();
 		}
 	}
 
@@ -237,7 +238,7 @@ public class CacheController
 	public void persist_instances() {
 		//! Elimina as instâncias mais antigas.
 		//! 24 horas * 120 medidas_por_hora = 2880 entradas por dia
-		int limit = 2280 - _persistent_instances.size() - _current_instances.size();
+		int limit = 2880 - _persistent_instances.size() - _current_instances.size();
 		for (int index = limit, i = 0; index < 0; index++, i++)
 			_persistent_instances.remove(i);
 
@@ -246,7 +247,7 @@ public class CacheController
 
 		//! Atualiza em disco
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter("cache2.arff", false));
+			BufferedWriter writer = new BufferedWriter(new FileWriter("cache.arff", false));
 			writer.write(_persistent_instances.toString());
 			writer.flush();
 			writer.close();

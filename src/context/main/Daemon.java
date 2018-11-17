@@ -8,6 +8,7 @@ import context.cache.CacheController;
 import context.comm.NamedPipeReader;
 import context.comm.NamedPipeWriter;
 import context.component.Message;
+import context.component.SmartData;
 import context.component.SynchronizedQueue;
 import context.runnable.ControlRunnable;
 import context.runnable.LearningRunnable;
@@ -50,7 +51,7 @@ public class Daemon
 	static private Timer _stats = null;
 	
 	public static void main(String[] args) throws Exception {
-		System.out.println("Initiating Daemon ...");
+		System.out.println("Initiating Daemon ... ");
 
 		setup();
 		
@@ -62,14 +63,14 @@ public class Daemon
 			
 			//! Blocking receive
 			Message message = _pipe_reader.receive();
-			
 
-			if (_state != State.ACTIVATED && message.getSmartData().getMac() == null) {
+			if (_state != State.ACTIVATED && (message.getType() != Message.Type.PREDICT && message.getType() != Message.Type.DISCOVERED))
+			{
 				System.out.println("User not detected. Nothing to do.");
 				continue;
 			}
 			
-//			|| (_state == State.IDLE && message.getType() != Message.Type.PREDICT) isso da problema eu acho porque o pipe vai ficar esperando a resposta
+//			 isso da problema eu acho porque o pipe vai ficar esperando a resposta
 			
 			//! Start measurements
 			_stats.start();
@@ -92,7 +93,7 @@ public class Daemon
 
 			case DATA:
 				System.out.println("Recebimento de dados:");
-				System.out.println("Mensagem: " + message.toString());
+				System.out.println(message.toString());
 				
 				_data_queue.enqueue(message);
 				
@@ -100,7 +101,7 @@ public class Daemon
 
 			case COMMAND:
 				System.out.println("Recebimento de commando:");
-				System.out.println("Mensagem: " + message.toString());
+				System.out.println(message.toString());
 				
 				_control_queue.enqueue(message);
 				
@@ -108,7 +109,7 @@ public class Daemon
 			
 			case PREDICT:
 				System.out.println("Solicitação de predição:");
-				System.out.println("Mensagem: " + message.toString());
+				System.out.println(message.toString());
 
 
 				Instance predict_context = _learning.predict();
@@ -123,9 +124,14 @@ public class Daemon
 				System.out.println("Usuário localizado:");
 				System.out.println(message.toString());
 				
+				if (message.getSmartData().getMac() == null)
+					continue;
+				
 				//! User detect
 				if (_state != State.ACTIVATED) {
 					Instance disc_context = _learning.predict();
+					SmartData data_predict = new SmartData(disc_context.value(disc_context.numAttributes()-1));
+					_cache_controller.update_control(data_predict, true);
 					System.out.println("Temperatura ideal: " + disc_context.value(disc_context.numAttributes()-1));
 					
 					_state = State.ACTIVATED;

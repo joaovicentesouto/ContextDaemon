@@ -7,7 +7,8 @@ process_is_alive()
 if len(sys.argv) != 2:
     exit(-1)
 
-smartdata = json.loads(sys.argv[1]) # maybe sys.argv[1]['smartdata']
+smartdata = json.loads(sys.argv[1])
+
 message = {
     'type': 3,
     'smartdata' : smartdata

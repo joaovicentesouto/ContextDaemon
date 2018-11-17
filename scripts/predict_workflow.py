@@ -24,3 +24,4 @@ with open('../.input', 'w') as fifo_in:
 
 with open('../.output', 'r') as fifo_out:
     print(fifo_out.read())
+    
