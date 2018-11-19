@@ -12,8 +12,6 @@ def process_is_alive():
         alive = process_exists(pid)
     except IOError:
         alive = False
-    
-    print(pid)
 
     if not alive:
         if os.fork() == 0:
