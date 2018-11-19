@@ -176,7 +176,7 @@ public class Daemon
 		
 		//! Configuring (Save the pid in a file)
 		BufferedWriter out = null;
-		long pid = ManagementFactory.getRuntimeMXBean().getPid();
+		long pid = Long.valueOf(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
 		
 		try {
 			out = new BufferedWriter(new FileWriter(".pid"));

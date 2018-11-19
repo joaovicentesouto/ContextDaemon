@@ -8,6 +8,7 @@ def process_is_alive():
         _file = open("../.pid", "r")
         pid = _file.readline()
         _file.close()
+        print(pid)
 
         alive = process_exists(pid)
     except IOError:
