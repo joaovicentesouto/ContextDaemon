@@ -133,6 +133,6 @@ public class SmartData
 	@Override
 	public String toString() {
 		return "SmartData [unit=" + unit + ", value=" + value + ", x=" + x + ", y=" + y + ", z=" + z + ", t=" + t
-				+ ", error=" + error + ", confidence=" + confidence + ", dev=" + dev + "mac=" + mac + "]";
+				+ ", error=" + error + ", confidence=" + confidence + ", dev=" + dev + ", mac=" + mac + "]";
 	}
 }

@@ -63,17 +63,19 @@ public class Daemon
 			
 			//! Blocking receive
 			Message message = _pipe_reader.receive();
-
-			if (_state != State.ACTIVATED && (message.getType() != Message.Type.PREDICT && message.getType() != Message.Type.DISCOVERED))
+			
+			if (_state != State.ACTIVATED && message.getType() != Message.Type.PREDICT && message.getType() != Message.Type.DISCOVERED)
 			{
 				System.out.println("User not detected. Nothing to do.");
 				continue;
 			}
 			
+			
 //			 isso da problema eu acho porque o pipe vai ficar esperando a resposta
 			
 			//! Start measurements
 			_stats.start();
+			
 			
 			switch (message.getType())
 			{
@@ -147,7 +149,7 @@ public class Daemon
 				System.out.println("Error on parsing the message!");
 				break;
 			}
-			
+						
 			//! End measurements
 			_stats.end();
 		}
@@ -176,7 +178,7 @@ public class Daemon
 		
 		//! Configuring (Save the pid in a file)
 		BufferedWriter out = null;
-		long pid = Long.valueOf(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
+		long pid = Long.parseLong(ManagementFactory.getRuntimeMXBean().getName().split("@")[0]);
 		
 		try {
 			out = new BufferedWriter(new FileWriter(".pid"));

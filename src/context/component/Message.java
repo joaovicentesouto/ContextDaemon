@@ -38,6 +38,10 @@ public class Message
 	    }
 	}
 	
+	public Message() {
+		super();
+	}
+	
 	public Message(Type type, SmartData data) {
 		super();
 		this.type = type;

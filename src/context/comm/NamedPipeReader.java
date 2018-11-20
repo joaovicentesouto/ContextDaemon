@@ -24,17 +24,25 @@ public class NamedPipeReader
 			Process p = Runtime.getRuntime().exec(cmds);
 			p.waitFor();
 		} catch (Exception e) {
-			System.out.println("File exist: pipe reader!");
+			File file = new File(filename);
+			file.delete();
+
+			Process p = Runtime.getRuntime().exec(cmds);
+			p.waitFor();
+
+			System.out.println("File exist: old pipe deleted and new created!");
 		}
 	}
 	
 	public Message receive() throws IOException {
 		Gson gson = new Gson();
-
-		_pipe_reader = new BufferedReader(new FileReader(new File(filename)));
-		String msg = _pipe_reader.readLine();
-		_pipe_reader.close();
 		
+		_pipe_reader = new BufferedReader(new FileReader(new File(filename)));
+		
+		String msg = _pipe_reader.readLine();
+		
+		_pipe_reader.close();
+
 		return gson.fromJson(msg, Message.class);
 	}
 }

@@ -14,15 +14,25 @@ def process_is_alive():
         alive = False
 
     if not alive:
+
+        if os.path.exists(".input"):
+            os.remove(".input")
+        
+        if os.path.exists(".output"):
+            os.remove(".output")
+
         print("cria")
-        if os.fork() == 0:
+        # if os.fork() == 0:
             # os.chdir(working_directory)
-            subprocess.Popen(command
-                , shell=True
-                , stdout=subprocess.PIPE
-                , stderr=subprocess.PIPE
-                , stdin=subprocess.PIPE
-            )
+        subprocess.Popen(command
+            , shell=True
+            , stdout=subprocess.PIPE
+            , stderr=subprocess.PIPE
+            , stdin=subprocess.PIPE
+        )
+
+    while not os.path.exists(".input"):
+        time.sleep(1)
 
 #Source: https://stackoverflow.com/questions/38056/how-do-you-check-in-linux-with-python-if-a-process-is-still-running
 #proc    -> name/id of the process
