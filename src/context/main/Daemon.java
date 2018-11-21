@@ -126,9 +126,6 @@ public class Daemon
 				System.out.println("Usuário localizado:");
 				System.out.println(message.toString());
 				
-				if (message.getSmartData().getMac() == null)
-					continue;
-				
 				//! User detect
 				if (_state != State.ACTIVATED) {
 					Instance disc_context = _learning.predict();
