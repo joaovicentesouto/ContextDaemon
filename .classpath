@@ -6,7 +6,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/bonotto/Dropbox/Faculdade/2018-02/INE5424/ContextDaemon/gson/gson-2.8.5.jar"/>
-	<classpathentry kind="lib" path="/home/bonotto/Dropbox/Faculdade/2018-02/INE5424/ContextDaemon/weka-macos/weka-linux.jar"/>
+	<classpathentry kind="lib" path="/home/souto/code/ContextDaemon/gson/gson-2.8.5.jar"/>
+	<classpathentry kind="lib" path="/home/souto/code/ContextDaemon/weka-macos/weka-linux.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

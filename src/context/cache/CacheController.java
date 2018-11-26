@@ -118,7 +118,7 @@ public class CacheController
 
 	public void update_data(SmartData data) {
 		//! Cria uma instancia que representa um intervalo de 30s
-		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 30)
+		if ((data.getT() - _calendar.getTimeInMillis())/1000L > 5)
 			create_context(data);
 
 		switch (data.getX())

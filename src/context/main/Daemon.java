@@ -50,7 +50,7 @@ public class Daemon
 	//! Measure performance file
 	static private Timer _stats = null;
 	
-	public static void main(String[] args) throws Exception {
+	public static void main(final String[] args) throws Exception {
 		System.out.println("Initiating Daemon ... ");
 
 		setup();

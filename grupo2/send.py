@@ -33,35 +33,35 @@ hum = {
 temp['x'] = 300
 temp['y'] = 300
 temp['t'] = current_milli_time()
-subprocess.check_call(['python3', 'wf103.py', json.dumps(temp)])
+subprocess.check_call(['python3', 'wf103', json.dumps(temp)])
 
-for i in range(500):
+for i in range(500000):
     print("Send %d and t=%d", i, current_milli_time())
     var = var + 1
     temp['x'] = 302
     temp['y'] = 302
     temp['value'] = 28 + (var % 3)
     temp['t'] = current_milli_time()
-    subprocess.check_call(['python3', 'wf100.py', json.dumps(temp)])
+    subprocess.check_call(['python3', 'wf100', json.dumps(temp)])
     
     var = var + 1
     temp['x'] = 298
     temp['y'] = 298
     temp['value'] = 28 + (var % 3)
     temp['t'] = current_milli_time()
-    subprocess.check_call(['python3', 'wf103.py', json.dumps(temp)])
+    subprocess.check_call(['python3', 'wf100', json.dumps(temp)])
     
     var = var + 1
     hum['x'] = 302
     hum['y'] = 302
     hum['value'] = 60 + (var % 3)
     hum['t'] = current_milli_time()
-    subprocess.check_call(['python3', 'wf103.py', json.dumps(hum)])
+    subprocess.check_call(['python3', 'wf100', json.dumps(hum)])
     
     var = var + 1
     hum['x'] = 298
     hum['y'] = 298
     hum['value'] = 60 + (var % 3)
     hum['t'] = current_milli_time()
-    subprocess.check_call(['python3', 'wf103.py', json.dumps(hum)])
+    subprocess.check_call(['python3', 'wf100', json.dumps(hum)])
     time.sleep(1)
