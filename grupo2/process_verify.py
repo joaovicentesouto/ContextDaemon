@@ -21,9 +21,6 @@ def process_is_alive():
         if os.path.exists(".output"):
             os.remove(".output")
 
-        print("cria")
-        # if os.fork() == 0:
-            # os.chdir(working_directory)
         subprocess.Popen(command
             , shell=True
             , stdout=subprocess.PIPE
