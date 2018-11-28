@@ -16,7 +16,7 @@ message = {
     'smartdata' : smartdata
 }
 
-print(json.dumps(message))
+print("Result: ", json.dumps(message))
 
 with open('.input', 'w') as fifo:
     fifo.write(json.dumps(message))

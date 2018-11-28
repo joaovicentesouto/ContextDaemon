@@ -21,8 +21,7 @@ def process_is_alive():
         if os.path.exists(".output"):
             os.remove(".output")
 
-        print("Daemon process not found")
-        print("Init daemon process")
+        print("Daemon process not found. Initializing of daemon\n")
         # if os.fork() == 0:
             # os.chdir(working_directory)
         subprocess.Popen(command
